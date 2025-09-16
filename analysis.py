@@ -127,6 +127,25 @@ def write_csv(df: pd.DataFrame, filename: str) -> None:
 
 
 # =============================================================
+# Global diffusion-coefficient stash (in-memory for this run)
+# =============================================================
+GLOBAL_D_VALUES: List[float] = []
+
+def _add_D(value: float, source: str = "") -> None:
+    """Store a positive, finite diffusion coefficient [cm^2/s] computed in this run."""
+    try:
+        v = float(value)
+    except Exception:
+        return
+    if np.isfinite(v) and v > 0:
+        GLOBAL_D_VALUES.append(v)
+
+def get_calculated_D() -> float:
+    """Return the median D [cm^2/s] accumulated so far, or NaN if none."""
+    return float(np.nanmedian(GLOBAL_D_VALUES)) if GLOBAL_D_VALUES else float("nan")
+
+
+# =============================================================
 # CV analysis (Task 3.2.1)
 # =============================================================
 @dataclass
@@ -267,6 +286,7 @@ def analyze_task32_cvs() -> None:
                 "D_RandlesSevcik_cm2_s": [D_RS],
             })
             write_csv(rs_out, "T3.2_CV_randles_sevcik.csv")
+            _add_D(D_RS, "Randles-Sevcik (combined)")
 
             # ---------- NEW: Produce the required Randles–Sevcik plot (both peaks) ----------
             v_sqrt = v  # alias
@@ -283,6 +303,8 @@ def analyze_task32_cvs() -> None:
             D_half_c = slope_c / const
             D_RS_a = float(D_half_a ** 2) if np.isfinite(D_half_a) else np.nan
             D_RS_c = float(D_half_c ** 2) if np.isfinite(D_half_c) else np.nan
+            _add_D(D_RS_a, "Randles-Sevcik (anodic)")
+            _add_D(D_RS_c, "Randles-Sevcik (cathodic)")
 
             # Save a compact CSV with both lines (non-breaking with the original file)
             write_csv(pd.DataFrame({
@@ -402,6 +424,7 @@ def analyze_task32_cp() -> None:
             D_sand = D_half ** 2
         else:
             D_sand = np.nan
+        _add_D(D_sand, "Sand")
 
         results.append(CPResult(label=label, current_mA=i_mA, tau_s=tau, E_tau_over_4_V=E_tau4, D_Sand_cm2_s=D_sand))
 
@@ -526,6 +549,8 @@ def analyze_task32_eis() -> None:
         k0 = (R_GAS * T_K) / ((N_ELECTRONS**2) * (F_CONST**2) * C_BULK_MOL_PER_CM3 * Rct_area) if Rct_area > 0 else np.nan
         Aw, D_w = _warburg_fit(df)
 
+        _add_D(D_w, "Warburg")
+
         results.append(EISResult(
             label=label_from_filename(path),
             Rs_area_Ohm_cm2=Rs_area,
@@ -610,7 +635,11 @@ def _interpolate_to_common_grid(curves: Dict[int, pd.DataFrame]) -> Tuple[np.nda
             raise KeyError("No current column '<I>/mA' or 'I/mA' found in LSV data.")
         i_mA = pd.to_numeric(df[current_candidates[0]], errors="coerce").to_numpy()
         j_A_cm2 = (i_mA / 1000.0) / GC_AREA_CM2
-        j_interp = np.interp(E_grid, e, j_A_cm2)
+        # Ensure monotonic E for interpolation by sorting by potential
+        order = np.argsort(e)
+        e_sorted = e[order]
+        j_sorted = j_A_cm2[order]
+        j_interp = np.interp(E_grid, e_sorted, j_sorted)
         j_by_rpm[rpm] = j_interp
     return E_grid, j_by_rpm
 
@@ -815,6 +844,10 @@ def analyze_task33_lsv_and_eis() -> None:
     # ---------------- PEIS overlay + qualitative parameters per rpm ----------------
     peis_files = sorted([p for p in lsv_dir.glob("*_PEIS_C01.txt")])
     if peis_files:
+        # Use in-memory D that has been accumulated during this run (RS, Sand, Warburg).
+        D_calc = get_calculated_D()
+        if not np.isfinite(D_calc):
+            print("[PEIS] No calculated D available yet (RS/Sand/Warburg). δ will be NaN. Run Task 3.2 first in the same run.")
         fig, ax = plt.subplots(figsize=(6.0, 4.8))
         peis_rows = []
         for path in peis_files:
@@ -840,11 +873,10 @@ def analyze_task33_lsv_and_eis() -> None:
             Rs_area, Rct_area, Cdl_per_cm2, f_peak = _extract_eis_parameters(df)
 
             # Diffusion layer thickness δ ~ 1.61 * D^{1/3} * ν^{1/6} * ω^{-1/2}
-            # Use D from Warburg (Task 3.2) if available via a prior results file; otherwise estimate using f_peak+Rct? Here we compute with a default D placeholder of 7e-6 cm^2/s unless overwritten.
-            D_use = 7e-6  # fallback typical for ferri/ferrocyanide; replace if known
+            # Always use the calculated D from this run (no assumed fallback).
             if rpm is not None and rpm > 0:
                 omega = 2 * np.pi * (rpm / 60.0)
-                delta_cm = 1.61 * (D_use ** (1/3)) * (NU_CMS2 ** (1/6)) * (omega ** (-0.5))
+                delta_cm = (1.61 * (D_calc ** (1/3)) * (NU_CMS2 ** (1/6)) * (omega ** (-0.5))) if np.isfinite(D_calc) else float("nan")
             else:
                 delta_cm = np.nan
 
@@ -856,6 +888,7 @@ def analyze_task33_lsv_and_eis() -> None:
                 "Cdl_F_cm2": Cdl_per_cm2,
                 "f_peak_Hz": f_peak,
                 "delta_cm": delta_cm,
+                "D_used_cm2_s": D_calc if np.isfinite(D_calc) else np.nan,
             })
 
         ax.set_xlabel(r"Z' (Ω·cm$^2$)")
