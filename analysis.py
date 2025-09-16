@@ -33,9 +33,37 @@ C_BULK_MOL_PER_CM3 = C_BULK_MOL_PER_L / 1000.0  # mol/cm^3
 C_BULK_mM = 2.3  # for Sand's eq. numeric form in the script (mM)
 
 # For rotating-disk hydrodynamics (Task 3.3):
-# Kinematic viscosity (ν) ~ 0.01 cm^2/s (≈ water at 25 °C). If you know the exact
-# value for your KCl solution, update here to improve δ estimates.
-NU_CMS2 = 0.010  # cm^2/s (adjust if known)
+# Kinematic viscosity ν for 2.0 M KCl @ 25 °C, derived from NIST tables (Kestin et al., 1981).
+# Steps:
+#   1) Convert molarity (M, mol/L) → molality (m, mol/kg) using an estimated solution density ρ.
+#        m = 1000*M / (1000*ρ - M*M_r), with ρ in g/mL and M_r in g/mol
+#   2) Interpolate NIST ν between 2.0 and 2.5 mol/kg at 25 °C:
+#        ν(2.0 m) = 0.8425 mm²/s,  ν(2.5 m) = 0.8324 mm²/s
+#   3) Convert mm²/s → cm²/s (1 mm²/s = 0.01 cm²/s)
+#
+# Note: The exact ρ for 2.0 M KCl @ 25 °C varies slightly by source (~1.10–1.12 g/mL).
+#       Using ρ = 1.10 g/mL gives m ≈ 2.103 mol/kg and ν ≈ 0.008404 cm²/s.
+#       If you have a measured density, set KCL_DENSITY_2M_25C_G_PER_ML accordingly.
+
+KCL_MOLAR_MASS_GPMOL = 74.5513      # g/mol
+KCL_DENSITY_2M_25C_G_PER_ML = 1.10  # g/mL (assumption; adjust if you know your solution density)
+M_KCL_MOLARITY = 2.0                 # mol/L
+
+# 1) M -> m
+m_KCL_molal = (1000.0 * M_KCL_MOLARITY) / (1000.0 * KCL_DENSITY_2M_25C_G_PER_ML - M_KCL_MOLARITY * KCL_MOLAR_MASS_GPMOL)
+
+# 2) Interpolate ν(m) between the two nearest NIST tabulated points at 25 °C
+m1, nu1_mm2s = 2.0, 0.8425  # 2.0 mol/kg
+m2, nu2_mm2s = 2.5, 0.8324  # 2.5 mol/kg
+nu_mm2s_interp = nu1_mm2s + (m_KCL_molal - m1) * (nu2_mm2s - nu1_mm2s) / (m2 - m1)
+
+# 3) Convert to cm²/s
+NU_CMS2 = nu_mm2s_interp * 0.01  # <-- kinematic viscosity to use downstream
+
+# (Optional) One-line summary for your logs:
+print(f"[ν] 2.0 M KCl @25°C: ρ={KCL_DENSITY_2M_25C_G_PER_ML:.3f} g/mL → m={m_KCL_molal:.3f} mol/kg → "
+      f"ν≈{nu_mm2s_interp:.4f} mm²/s → NU_CMS2={NU_CMS2:.6f} cm²/s")
+
 
 # Potentials vs Ag/AgCl unless otherwise specified
 
@@ -45,6 +73,43 @@ NU_CMS2 = 0.010  # cm^2/s (adjust if known)
 def ensure_dirs() -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     RES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def setup_plot_style() -> None:
+    """Set a consistent, clean plotting style across all figures."""
+    plt.rcParams.update({
+        "font.size": 10,
+        "axes.titlesize": 12,
+        "axes.labelsize": 11,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "axes.grid": True,
+        "grid.linestyle": ":",
+        "grid.linewidth": 0.6,
+        "grid.alpha": 0.3,
+        "axes.linewidth": 0.8,
+        "lines.linewidth": 1.2,
+        "legend.frameon": False,
+        "legend.fontsize": 9,
+        "savefig.dpi": 300,
+    })
+
+
+def beautify_axes(ax: plt.Axes) -> None:
+    """Apply minor ticks, outward ticks, and simplify spines on an Axes."""
+    try:
+        ax.minorticks_on()
+    except Exception:
+        pass
+    ax.tick_params(which="both", direction="out", length=5, width=0.8)
+    ax.tick_params(which="minor", length=3, width=0.6)
+    # Hide top/right spines and standardize spine width
+    if "top" in ax.spines:
+        ax.spines["top"].set_visible(False)
+    if "right" in ax.spines:
+        ax.spines["right"].set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_linewidth(0.8)
 
 
 def _detect_header_start(path: Path) -> int:
@@ -114,7 +179,11 @@ def extract_rpm_from_name(path: Path) -> Optional[int]:
 def safe_save(fig: plt.Figure, filename: str) -> None:
     ensure_dirs()
     out = FIG_DIR / filename
-    fig.savefig(out, dpi=200, bbox_inches="tight")
+    try:
+        fig.tight_layout()
+    except Exception:
+        pass
+    fig.savefig(out, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {out.relative_to(ROOT)}")
 
@@ -260,8 +329,8 @@ def analyze_task32_cvs() -> None:
     ax.set_xlabel("E (V vs Ag/AgCl)")
     ax.set_ylabel("j (mA cm$^{-2}$)")
     ax.set_title("Task 3.2 – CVs (last cycle per file)")
-    ax.legend(fontsize=7, ncol=2)
-    ax.grid(True, ls=":", lw=0.5)
+    ax.legend(fontsize=8, ncol=2, title="Files", title_fontsize=9)
+    beautify_axes(ax)
     safe_save(fig, "T3.2_CV_overlay.png")
 
     # Summary table + Randles–Sevcik diffusion coefficient from |i_p| vs sqrt(v)
@@ -331,7 +400,7 @@ def analyze_task32_cvs() -> None:
             ax_rs.set_ylabel(r"$i_p$ (mA)")
             ax_rs.set_title("Task 3.2 – Randles–Sevcik (peak current vs $\\sqrt{v}$)")
             ax_rs.legend(fontsize=8)
-            ax_rs.grid(True, ls=":", lw=0.5)
+            beautify_axes(ax_rs)
             safe_save(fig_rs, "T3.2_CV_RandlesSevcik.png")
         else:
             print("[CV] Need >=2 scan rates with time to estimate D via Randles–Sevcik.")
@@ -431,8 +500,8 @@ def analyze_task32_cp() -> None:
     ax.set_xlabel("t (s)")
     ax.set_ylabel("E (V vs Ag/AgCl)")
     ax.set_title("Task 3.2 – Chronopotentiometry (E vs t)")
-    ax.legend(fontsize=7, ncol=2)
-    ax.grid(True, ls=":", lw=0.5)
+    ax.legend(fontsize=8, ncol=2)
+    beautify_axes(ax)
     safe_save(fig, "T3.2_CP_transients.png")
 
     if results:
@@ -565,8 +634,8 @@ def analyze_task32_eis() -> None:
     ax.set_xlabel(r"Z' (Ω·cm$^2$)")
     ax.set_ylabel(r"-Z'' (Ω·cm$^2$)")
     ax.set_title("Task 3.2 – EIS Nyquist (area-normalized)")
-    ax.legend(fontsize=7)
-    ax.grid(True, ls=":", lw=0.5)
+    ax.legend(fontsize=8)
+    beautify_axes(ax)
     ax.set_aspect("equal", adjustable="box")
     safe_save(fig, "T3.2_EIS_Nyquist.png")
 
@@ -593,8 +662,8 @@ def analyze_task32_eis() -> None:
     axw.set_xlabel(r"$1/\sqrt{\omega}$ (s$^{1/2}$)")
     axw.set_ylabel(r"Z (Ω·cm$^2$)")
     axw.set_title("Task 3.2 – Warburg linearization")
-    axw.legend(fontsize=7, ncol=2)
-    axw.grid(True, ls=":", lw=0.5)
+    axw.legend(fontsize=8, ncol=2)
+    beautify_axes(axw)
     safe_save(figw, "T3.2_EIS_Warburg_linearization.png")
 
     if results:
@@ -687,8 +756,8 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.set_xlabel("E (V vs Ag/AgCl)")
         ax.set_ylabel("j (mA cm$^{-2}$)")
         ax.set_title("Task 3.3 – LSVs at various rotation rates")
-        ax.legend(fontsize=7, ncol=2)
-        ax.grid(True, ls=":", lw=0.5)
+        ax.legend(fontsize=8, ncol=2)
+        beautify_axes(ax)
         safe_save(fig, "T3.3_LSV_overlay.png")
     else:
         print("[LSV] No LSV files found; skipping LSV plot.")
@@ -751,7 +820,7 @@ def analyze_task33_lsv_and_eis() -> None:
                     axkl.set_xlabel(r"$1/\sqrt{\omega}$ (s$^{1/2}$)")
                     axkl.set_ylabel(r"$1/j$ (cm$^2$ A$^{-1}$)")
                     axkl.set_title(f"Koutecky–Levich at E = {E_mid:.3f} V")
-                    axkl.grid(True, ls=":", lw=0.5)
+                    beautify_axes(axkl)
                     safe_save(figkl, "T3.3_KL_example.png")
 
                 # --------- Tafel from j_k(E) ---------
@@ -820,7 +889,7 @@ def analyze_task33_lsv_and_eis() -> None:
                         axtf.set_xlabel(r"log$_{10}$(|j$_k$| / A cm$^{-2}$)")
                         axtf.set_ylabel(r"$\eta$ (V)")
                         axtf.set_title("Task 3.3 – Tafel from kinetic currents")
-                        axtf.grid(True, ls=":", lw=0.5)
+                        beautify_axes(axtf)
                         axtf.legend(fontsize=8)
                         safe_save(figtf, "T3.3_Tafel.png")
 
@@ -894,8 +963,8 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.set_xlabel(r"Z' (Ω·cm$^2$)")
         ax.set_ylabel(r"-Z'' (Ω·cm$^2$)")
         ax.set_title("Task 3.3 – PEIS Nyquist (area-normalized)")
-        ax.legend(fontsize=7)
-        ax.grid(True, ls=":", lw=0.5)
+        ax.legend(fontsize=8)
+        beautify_axes(ax)
         ax.set_aspect("equal", adjustable="box")
         safe_save(fig, "T3.3_EIS_Nyquist.png")
 
@@ -910,7 +979,7 @@ def analyze_task33_lsv_and_eis() -> None:
 # =============================================================
 
 def main() -> None:
-    plt.rcParams.update({"axes.grid": True})
+    setup_plot_style()
     print(f"Working directory: {ROOT}")
     print(f"Electrode area (GC, d={GC_DIAMETER_MM} mm): {GC_AREA_CM2:.4f} cm^2")
 
