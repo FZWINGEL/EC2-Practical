@@ -1,5 +1,6 @@
 import math
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ import pandas as pd
 from .config import C_BULK_mM, DATA_DIR, GC_AREA_CM2, N_ELECTRONS
 from .diffusion import add_diffusion_coefficient
 from .io_utils import read_biologic_table, write_csv
+from .pipeline import TaskReport
 from .plotting import beautify_axes, safe_save
 from .utils import get_column, label_from_filename
 
@@ -117,27 +119,42 @@ def _estimate_tau_s(t_s: np.ndarray, e_v: np.ndarray) -> float:
     return tau if (np.isfinite(tau) and tau > 0) else float("nan")
 
 
-def analyze_task32_cp() -> None:
+def _load_cp_table(path: Path, report: TaskReport) -> Optional[pd.DataFrame]:
+    try:
+        return read_biologic_table(path)
+    except Exception as exc:
+        message = f"[CP] Failed to read {path.name}: {exc}"
+        print(message)
+        report.add_warning(message)
+        return None
+
+
+def analyze_task32_cp() -> TaskReport:
+    report = TaskReport(name="Task 3.2 - CP")
     cp_dir = DATA_DIR / "Task 3.2 CP"
     files = sorted(cp_dir.glob("*_CP_C01.txt"))
     if not files:
-        print("[CP] No CP files found; skipping.")
-        return
+        message = "[CP] No CP files found; skipping."
+        print(message)
+        report.add_message(message)
+        return report
 
     results: List[CPResult] = []
     fig, ax = plt.subplots(figsize=(6.2, 4.2))
     for path in files:
-        try:
-            df = read_biologic_table(path)
-        except Exception as exc:
-            print(f"[CP] Failed to read {path.name}: {exc}")
+        df = _load_cp_table(path, report)
+        if df is None:
             continue
+
         t_col = get_column(df, ["time/s", "Time/s"]) or "time/s"
         e_col = get_column(df, ["Ewe/V"]) or "Ewe/V"
         i_col = get_column(df, ["<I>/mA", "I/mA"])
         if t_col not in df or e_col not in df:
-            print(f"[CP] Missing time/E columns in {path.name}; skipping.")
+            message = f"[CP] Missing time/E columns in {path.name}; skipping."
+            print(message)
+            report.add_warning(message)
             continue
+
         t_s = pd.to_numeric(df[t_col], errors="coerce").to_numpy()
         e_v = pd.to_numeric(df[e_col], errors="coerce").to_numpy()
         ax.plot(t_s, e_v, lw=1.0, label=label_from_filename(path))
@@ -182,6 +199,8 @@ def analyze_task32_cp() -> None:
                 D_half = (abs(i_applied_mA) * math.sqrt(tau)) / (85.5 * N_ELECTRONS * GC_AREA_CM2 * C_BULK_mM)
                 D_sand = float(D_half ** 2)
                 add_diffusion_coefficient(D_sand, "Sand")
+                if np.isfinite(D_sand):
+                    report.add_message(f"[CP] Segment {seg_idx} D~{D_sand:.2e} cm^2/s")
             else:
                 D_sand = float("nan")
 
@@ -201,9 +220,12 @@ def analyze_task32_cp() -> None:
     ax.set_title("Task 3.2 - Chronopotentiometry (E vs t)")
     ax.legend(title="Applied current", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
-    safe_save(fig, "T3.2_CP_transients.png")
+    report.record_figure(safe_save(fig, "T3.2_CP_transients.png"))
 
     if results:
         df_results = pd.DataFrame([res.__dict__ for res in results])
-        write_csv(df_results, "T3.2_CP_summary.csv")
+        report.record_table(write_csv(df_results, "T3.2_CP_summary.csv"))
+    else:
+        report.add_warning("[CP] No usable Sand segments detected.")
 
+    return report

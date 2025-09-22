@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 from .config import FIG_DIR, ROOT, ensure_dirs
@@ -44,8 +46,8 @@ def beautify_axes(ax: plt.Axes) -> None:
         spine.set_linewidth(0.8)
 
 
-def safe_save(fig: plt.Figure, filename: str) -> None:
-    """Save a figure into the figures directory with tight layout handling."""
+def safe_save(fig: plt.Figure, filename: str) -> Path:
+    """Save a figure into the figures directory and return the artifact path."""
     ensure_dirs()
     out_path = FIG_DIR / filename
     try:
@@ -55,4 +57,4 @@ def safe_save(fig: plt.Figure, filename: str) -> None:
     fig.savefig(out_path, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {out_path.relative_to(ROOT)}")
-
+    return out_path

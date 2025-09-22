@@ -10,6 +10,7 @@ from pathlib import Path
 from .config import DATA_DIR, GC_AREA_CM2, NU_CMS2, N_ELECTRONS
 from .diffusion import get_calculated_diffusion
 from .io_utils import read_biologic_table, write_csv
+from .pipeline import TaskReport
 from .plotting import beautify_axes, safe_save
 from .task32_eis import _extract_eis_parameters_both
 from .task32_eis import fit_with_impedance_py
@@ -51,11 +52,14 @@ def _interpolate_to_common_grid(curves: Dict[int, pd.DataFrame]) -> Tuple[np.nda
     return E_grid, j_by_rpm
 
 
-def analyze_task33_lsv_and_eis() -> None:
+def analyze_task33_lsv_and_eis() -> TaskReport:
+    report = TaskReport(name="Task 3.3 - LSV/EIS")
     lsv_dir = DATA_DIR / "Task 3.3 LSV"
     if not lsv_dir.exists():
-        print("[Task 3.3] Directory not found; skipping.")
-        return
+        message = "[Task 3.3] Directory not found; skipping."
+        print(message)
+        report.add_message(message)
+        return report
 
     lsv_files = sorted([p for p in lsv_dir.glob("*_LSV_C01.txt") if "PEIS" not in p.name])
     curves: Dict[int, pd.DataFrame] = {}
@@ -66,13 +70,17 @@ def analyze_task33_lsv_and_eis() -> None:
             try:
                 df = read_biologic_table(path)
             except Exception as exc:
-                print(f"[LSV] Failed to read {path.name}: {exc}")
+                message = f"[LSV] Failed to read {path.name}: {exc}"
+                print(message)
+                report.add_warning(message)
                 continue
 
             e_col = get_column(df, ["Ewe/V"]) or "Ewe/V"
             i_col = get_column(df, ["<I>/mA", "I/mA"]) or "<I>/mA"
             if not ({e_col, i_col} <= set(df.columns)):
-                print(f"[LSV] Missing columns in {path.name}; skipping.")
+                message = f"[LSV] Missing columns in {path.name}; skipping."
+                print(message)
+                report.add_warning(message)
                 continue
 
             e_v = pd.to_numeric(df[e_col], errors="coerce").to_numpy()
@@ -93,15 +101,19 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.set_title("Task 3.3 - LSVs at various rotation rates")
         ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
-        safe_save(fig, "T3.3_LSV_overlay.png")
+        report.record_figure(safe_save(fig, "T3.3_LSV_overlay.png"))
     else:
-        print("[LSV] No LSV files found; skipping LSV plot.")
+        message = "[LSV] No LSV files found; skipping LSV plot."
+        print(message)
+        report.add_message(message)
 
     if len(curves) >= 3:
         try:
             E_grid, j_by_rpm = _interpolate_to_common_grid(curves)
         except Exception as exc:
-            print(f"[KL] Could not interpolate to common grid: {exc}")
+            message = f"[KL] Could not interpolate to common grid: {exc}"
+            print(message)
+            report.add_warning(message)
             E_grid, j_by_rpm = None, None
 
         if E_grid is not None and j_by_rpm is not None:
@@ -131,10 +143,12 @@ def analyze_task33_lsv_and_eis() -> None:
 
             if jk_vs_E:
                 df_kl = pd.DataFrame([point.__dict__ for point in kl_rows])
-                write_csv(df_kl, "T3.3_KouteckyLevich_points.csv")
+                report.record_table(write_csv(df_kl, "T3.3_KouteckyLevich_points.csv"))
+                report.add_message(f"[KL] Logged {len(kl_rows)} Koutecky-Levich points across {len(jk_vs_E)} potentials.")
 
                 df_jk = pd.DataFrame({"E_V": [p[0] for p in jk_vs_E], "j_k_A_cm2": [p[1] for p in jk_vs_E]}).sort_values("E_V")
-                write_csv(df_jk, "T3.3_jk_vs_E.csv")
+                report.record_table(write_csv(df_jk, "T3.3_jk_vs_E.csv"))
+                report.add_message(f"[KL] Derived {len(df_jk)} kinetic-current values.")
 
                 mid = len(jk_vs_E) // 2
                 if mid < len(jk_vs_E):
@@ -152,7 +166,7 @@ def analyze_task33_lsv_and_eis() -> None:
                     axkl.set_ylabel("1/j (cm^2 A^-1)")
                     axkl.set_title(f"Koutecky-Levich at E = {E_mid:.3f} V")
                     beautify_axes(axkl)
-                    safe_save(figkl, "T3.3_KL_example.png")
+                    report.record_figure(safe_save(figkl, "T3.3_KL_example.png"))
 
                 zero_Es = []
                 for rpm, j in j_by_rpm.items():
@@ -235,48 +249,63 @@ def analyze_task33_lsv_and_eis() -> None:
                         axtf.set_title("Task 3.3 - Tafel from kinetic currents")
                         beautify_axes(axtf)
                         axtf.legend(title="Data and fit", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
-                        safe_save(figtf, "T3.3_Tafel.png")
+                        report.record_figure(safe_save(figtf, "T3.3_Tafel.png"))
 
-                        write_csv(
-                            pd.DataFrame(
-                                {
-                                    "slope_V_per_decade": [best["slope"]],
-                                    "intercept_V": [best["intercept"]],
-                                    "E_eq_est_V": [E_eq],
-                                    "j0_A_cm2": [float(j0)],
-                                    "R2": [best["r2"]],
-                                    "branch_sign": [int(sign_to_use)],
-                                    "eta_min_V": [best["eta_min"]],
-                                    "eta_max_V": [best["eta_max"]],
-                                }
-                            ),
-                            "T3.3_Tafel_fit.csv",
+                        report.record_table(
+                            write_csv(
+                                pd.DataFrame(
+                                    {
+                                        "slope_V_per_decade": [best["slope"]],
+                                        "intercept_V": [best["intercept"]],
+                                        "E_eq_est_V": [E_eq],
+                                        "j0_A_cm2": [float(j0)],
+                                        "R2": [best["r2"]],
+                                        "branch_sign": [int(sign_to_use)],
+                                        "eta_min_V": [best["eta_min"]],
+                                        "eta_max_V": [best["eta_max"]],
+                                    }
+                                ),
+                                "T3.3_Tafel_fit.csv",
+                            )
                         )
+                        report.add_message(f"[Tafel] j0~{j0:.2e} A/cm^2; slope={best['slope']:.3f} V/dec")
                     else:
-                        print("[Tafel] Not enough points in any reasonable region to fit.")
+                        message = "[Tafel] Not enough points in any reasonable region to fit."
+                        print(message)
+                        report.add_warning(message)
                 else:
-                    print("[Tafel] Not enough points on a single branch to fit.")
+                    message = "[Tafel] Not enough points on a single branch to fit."
+                    print(message)
+                    report.add_warning(message)
     else:
-        print("[KL] Need LSV data at >=3 rotation rates for Koutecky-Levich and Tafel.")
+        message = "[KL] Need LSV data at >=3 rotation rates for Koutecky-Levich and Tafel."
+        print(message)
+        report.add_warning(message)
 
     peis_files = sorted([p for p in lsv_dir.glob("*_PEIS_C01.txt")])
     if peis_files:
         D_calc = get_calculated_diffusion()
         if not np.isfinite(D_calc):
-            print("[PEIS] No calculated D available yet (RS/Sand/Warburg). delta will be NaN. Run Task 3.2 first in the same run.")
+            message = "[PEIS] No calculated D available yet (RS/Sand/Warburg). delta will be NaN. Run Task 3.2 first in the same run."
+            print(message)
+            report.add_warning(message)
         fig, ax = plt.subplots(figsize=(6.0, 4.8))
         peis_rows = []
         for path in peis_files:
             try:
                 df = read_biologic_table(path)
             except Exception as exc:
-                print(f"[PEIS] Failed to read {path.name}: {exc}")
+                message = f"[PEIS] Failed to read {path.name}: {exc}"
+                print(message)
+                report.add_warning(message)
                 continue
 
             re_col = get_column(df, ["Re(Z)/Ohm"]) or "Re(Z)/Ohm"
             im_col = get_column(df, ["-Im(Z)/Ohm"]) or "-Im(Z)/Ohm"
             if not ({re_col, im_col} <= set(df.columns)):
-                print(f"[PEIS] Missing impedance columns in {path.name}; skipping.")
+                message = f"[PEIS] Missing impedance columns in {path.name}; skipping."
+                print(message)
+                report.add_warning(message)
                 continue
 
             z_re = pd.to_numeric(df[re_col], errors="coerce").to_numpy() * GC_AREA_CM2
@@ -293,7 +322,9 @@ def analyze_task33_lsv_and_eis() -> None:
             try:
                 fit = fit_with_impedance_py(df, circuit_str='R0-p(R1,CPE1)-p(R2,CPE2)')
             except Exception as exc:
-                print(f"[PEIS] Fit failed for {path.name}: {exc}")
+                message = f"[PEIS] Fit failed for {path.name}: {exc}"
+                print(message)
+                report.add_warning(message)
                 fit = ECFFit(model="", Rs=float("nan"), Rct=float("nan"), Cdl=None, sigma=None, Q=None, alpha=None, rchi2=float("nan"), n_points=0)
 
             if fit.Rs is not None and hasattr(fit, 'parameters_') and len(fit.parameters_) >= 7:
@@ -362,8 +393,10 @@ def analyze_task33_lsv_and_eis() -> None:
 
             debug_dir = Path("results/debugplots")
             debug_dir.mkdir(exist_ok=True, parents=True)
-            fig_debug.savefig(debug_dir / f"debug_PEIS_fit_{label_from_filename(path)}.png", dpi=150, bbox_inches="tight")
+            debug_path = debug_dir / f"debug_PEIS_fit_{label_from_filename(path)}.png"
+            fig_debug.savefig(debug_path, dpi=150, bbox_inches="tight")
             plt.close(fig_debug)
+            report.record_figure(debug_path)
 
         ax.set_xlabel("Z' (ohm cm^2)")
         ax.set_ylabel("-Z'' (ohm cm^2)")
@@ -371,10 +404,14 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         ax.set_aspect("equal", adjustable="box")
-        safe_save(fig, "T3.3_EIS_Nyquist.png")
+        report.record_figure(safe_save(fig, "T3.3_EIS_Nyquist.png"))
 
         if peis_rows:
-            write_csv(pd.DataFrame(peis_rows), "T3.3_PEIS_summary.csv")
+            report.record_table(write_csv(pd.DataFrame(peis_rows), "T3.3_PEIS_summary.csv"))
+            report.add_message(f"[PEIS] Processed {len(peis_rows)} PEIS spectra.")
     else:
-        print("[PEIS] No PEIS files found; skipping PEIS plot.")
+        message = "[PEIS] No PEIS files found; skipping PEIS plot."
+        print(message)
+        report.add_message(message)
 
+    return report

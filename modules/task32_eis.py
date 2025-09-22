@@ -18,6 +18,7 @@ from .config import (
 )
 from .diffusion import add_diffusion_coefficient
 from .io_utils import read_biologic_table, write_csv
+from .pipeline import TaskReport
 from .plotting import beautify_axes, safe_save
 from .utils import get_column, label_from_filename
 
@@ -652,17 +653,19 @@ def _warburg_fit(df: pd.DataFrame) -> Tuple[float, float]:
     return Aw, D_w
 
 
-def analyze_task32_eis() -> None:
+def analyze_task32_eis() -> TaskReport:
+    report = TaskReport(name="Task 3.2 - EIS")
     eis_dir = DATA_DIR / "Task 3.2 EIS"
     files = sorted(eis_dir.glob("*_C01.txt"))
     if not files:
-        print("[EIS] No EIS files found; skipping.")
-        return
+        message = "[EIS] No EIS files found; skipping."
+        print(message)
+        report.add_message(message)
+        return report
 
     fig, ax = plt.subplots(figsize=(6.0, 4.8))
     results: List[EISResult] = []
 
-    from pathlib import Path
     debug_dir = Path("results/debugplots")
     debug_dir.mkdir(exist_ok=True, parents=True)
 
@@ -670,14 +673,18 @@ def analyze_task32_eis() -> None:
         try:
             df = read_biologic_table(path)
         except Exception as exc:
-            print(f"[EIS] Failed to read {path.name}: {exc}")
+            message = f"[EIS] Failed to read {path.name}: {exc}"
+            print(message)
+            report.add_warning(message)
             continue
 
         re_col = get_column(df, ['Re(Z)/Ohm']) or 'Re(Z)/Ohm'
         im_col = get_column(df, ['-Im(Z)/Ohm']) or '-Im(Z)/Ohm'
         f_col = get_column(df, ['freq/Hz']) or 'freq/Hz'
         if re_col not in df or im_col not in df:
-            print(f"[EIS] Missing impedance columns in {path.name}; skipping.")
+            message = f"[EIS] Missing impedance columns in {path.name}; skipping."
+            print(message)
+            report.add_warning(message)
             continue
 
         label = label_from_filename(path)
@@ -712,8 +719,10 @@ def analyze_task32_eis() -> None:
         ax_debug.legend()
         beautify_axes(ax_debug)
         ax_debug.set_aspect('equal', adjustable='box')
-        fig_debug.savefig(debug_dir / f'debug_EIS_fit_{label}.png', dpi=150, bbox_inches='tight')
+        debug_path = debug_dir / f'debug_EIS_fit_{label}.png'
+        fig_debug.savefig(debug_path, dpi=150, bbox_inches='tight')
         plt.close(fig_debug)
+        report.record_figure(debug_path)
 
         Rs_heur, Rct_heur, Cdl_h, f_peak, z_re_h, z_im_h, f_hz_h, (idx_peak1, start_idx, end_idx) = _extract_eis_parameters_heuristic(df)
 
@@ -737,7 +746,6 @@ def analyze_task32_eis() -> None:
                 Rs_best, Rct_best = Rs_fit, Rct_fit
         Cdl_per_cm2 = float(1.0 / (2.0 * math.pi * f_peak * Rct_best)) if (np.isfinite(f_peak) and Rct_best and Rct_best > 0) else Cdl_h
 
-        # Effective Cdl from CPE if present
         if (chosen.Cdl is not None) and np.isfinite(chosen.Cdl) and (chosen.Cdl > 0):
             cdl_nls_cm2 = float(chosen.Cdl)
         elif (
@@ -761,6 +769,8 @@ def analyze_task32_eis() -> None:
 
         Aw, D_w = _warburg_fit(df)
         add_diffusion_coefficient(D_w, 'Warburg')
+        if np.isfinite(D_w):
+            report.add_message(f"[EIS] {label}: D_W~{D_w:.2e} cm^2/s")
 
         results.append(
             EISResult(
@@ -782,13 +792,14 @@ def analyze_task32_eis() -> None:
                 model_label=chosen.model,
             )
         )
+
     ax.set_xlabel("Z' (ohm cm^2)")
     ax.set_ylabel("-Z'' (ohm cm^2)")
     ax.set_title("Task 3.2 - EIS Nyquist (area-normalized)")
     ax.legend(title="Dataset", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     ax.set_aspect("equal", adjustable="box")
-    safe_save(fig, "T3.2_EIS_Nyquist.png")
+    report.record_figure(safe_save(fig, "T3.2_EIS_Nyquist.png"))
 
     figw, axw = plt.subplots(figsize=(6.4, 4.2))
     for path in files:
@@ -814,7 +825,7 @@ def analyze_task32_eis() -> None:
     axw.set_title("Task 3.2 - Warburg linearization")
     axw.legend(title="Components", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8, ncol=1)
     beautify_axes(axw)
-    safe_save(figw, "T3.2_EIS_Warburg_linearization.png")
+    report.record_figure(safe_save(figw, "T3.2_EIS_Warburg_linearization.png"))
 
     if results:
         df_eis = pd.DataFrame(
@@ -834,10 +845,9 @@ def analyze_task32_eis() -> None:
                 for r in results
             ]
         )
-        write_csv(df_eis, "T3.2_EIS_summary.csv")
+        report.record_table(write_csv(df_eis, "T3.2_EIS_summary.csv"))
+        report.add_message(f"[EIS] Processed {len(results)} spectra.")
+    else:
+        report.add_warning("[EIS] No spectra yielded analyzable parameters.")
 
-
-
-
-
-
+    return report

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -44,10 +43,10 @@ def read_biologic_table(path: Path) -> pd.DataFrame:
     return df
 
 
-def write_csv(df: pd.DataFrame, filename: str) -> None:
-    """Write a DataFrame into the results directory."""
+def write_csv(df: pd.DataFrame, filename: str) -> Path:
+    """Write a DataFrame into the results directory and return the path."""
     ensure_dirs()
     out_path = RES_DIR / filename
     df.to_csv(out_path, index=False)
-    print(f"Saved: {(out_path).relative_to(ROOT)}")
-
+    print(f"Saved: {out_path.relative_to(ROOT)}")
+    return out_path
