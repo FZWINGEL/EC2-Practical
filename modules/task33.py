@@ -291,15 +291,26 @@ def analyze_task33_lsv_and_eis() -> None:
             omega_all = 2 * np.pi * f_all[mask]
 
             try:
-                fit = fit_with_impedance_py(df, circuit_str='R0-p(R1,C1)-p(R2,C2)')
+                fit = fit_with_impedance_py(df, circuit_str='R0-p(R1,CPE1)-p(R2,CPE2)')
             except Exception as exc:
                 print(f"[PEIS] Fit failed for {path.name}: {exc}")
                 fit = ECFFit(model="", Rs=float("nan"), Rct=float("nan"), Cdl=None, sigma=None, Q=None, alpha=None, rchi2=float("nan"), n_points=0)
 
-            if fit.Rs is not None and hasattr(fit, 'parameters_') and len(fit.parameters_) >= 5:
+            if fit.Rs is not None and hasattr(fit, 'parameters_') and len(fit.parameters_) >= 7:
                 Rs_area = fit.parameters_[0] * GC_AREA_CM2
-                Rct_area = (fit.parameters_[1] + fit.parameters_[3]) * GC_AREA_CM2  # R1 + R2
-                Cdl_per_cm2 = fit.parameters_[2] / GC_AREA_CM2  # Use first C as main Cdl
+                R1 = float(fit.parameters_[1])
+                Q1 = float(fit.parameters_[2])
+                alpha1 = float(fit.parameters_[3])
+                R2 = float(fit.parameters_[4])
+                # Q2 = float(fit.parameters_[5])  # not used currently
+                # alpha2 = float(fit.parameters_[6])
+                Rct_area = (R1 + R2) * GC_AREA_CM2  # R1 + R2
+                # Effective Cdl from first branch at its peak frequency: C_eff = Q^(1/alpha) / R^(1 - 1/alpha)
+                if np.isfinite(R1) and R1 > 0 and np.isfinite(Q1) and Q1 > 0 and np.isfinite(alpha1) and (0.5 <= alpha1 < 1.0):
+                    C_eff = (Q1 ** (1.0 / alpha1)) / (R1 ** (1.0 - 1.0 / alpha1))
+                    Cdl_per_cm2 = C_eff / GC_AREA_CM2
+                else:
+                    Cdl_per_cm2 = float("nan")
             else:
                 Rs_area = float("nan")
                 Rct_area = float("nan")

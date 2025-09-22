@@ -149,15 +149,163 @@ def fit_with_impedance_py(df: pd.DataFrame, circuit_str: str = 'R0-p(R1,C1)-W1',
                 float(max(c_guess, 1e-8)),
                 float(max(sigma_guess, 1.0)),
             ]
-        elif circuit_str == 'R0-p(R1,C1)-p(R2,C2)':
-            r_branch = float(max(rct_guess, 1.0))
-            half = max(r_branch / 2.0, 1.0)
+        elif circuit_str == 'R0-p(R1,CPE1)-W1':
+            # Randles with CPE: Rs - p(Rct, CPE) - Warburg
+            alpha_guess = 0.85
+            # Use peak frequency if available; otherwise a HF-mid value
+            f_ref = f_peak if ('f_peak' in locals() and np.isfinite(f_peak) and f_peak > 0) else (f_use[len(f_use)//4] if len(f_use) else 1.0)
+            w_ref = 2.0 * math.pi * max(float(f_ref), 1e-12)
+            q_guess = float(max(min(1.0 / (max(rct_guess, 1.0) * (w_ref ** alpha_guess)), 1e-1), 1e-10))
             guess = [
                 float(max(rs_guess, 1e-3)),
-                float(half),
-                float(max(c_guess, 1e-8)),
-                float(max(r_branch - half, 1.0)),
-                float(max(c_guess, 1e-8)),
+                float(max(rct_guess, 1.0)),
+                q_guess,
+                float(min(max(alpha_guess, 0.5), 0.99)),
+                float(max(sigma_guess, 1.0)),
+            ]
+        elif circuit_str == 'R0-p(R1,C1)-p(R2,C2)':
+            # Two-semicircle heuristic from Z''(f) peaks
+            logf = np.log10(np.maximum(f_use, 1e-12))
+            # Work with -Im(Z) which is positive for capacitive arcs
+            zim_pos = -Zim_use
+            zim_smooth = pd.Series(zim_pos).rolling(window=max(5, len(zim_pos) // 50), center=True, min_periods=1).median().to_numpy()
+
+            # Find local maxima indices in smoothed Zim
+            candidate_idx = []
+            for i in range(1, len(zim_smooth) - 1):
+                if zim_smooth[i] >= zim_smooth[i - 1] and zim_smooth[i] >= zim_smooth[i + 1]:
+                    candidate_idx.append(i)
+
+            if not candidate_idx and len(zim_smooth):
+                candidate_idx = [int(np.nanargmax(zim_smooth))]
+
+            # Filter by amplitude threshold and enforce separation in decades
+            peaks: List[int] = []
+            if candidate_idx:
+                amp_thr = 0.10 * float(np.nanmax(zim_smooth))
+                cand_sorted = sorted(candidate_idx, key=lambda k: float(zim_smooth[k]), reverse=True)
+                min_sep_dec = 0.20
+                for idx in cand_sorted:
+                    if not np.isfinite(zim_smooth[idx]) or zim_smooth[idx] < amp_thr:
+                        continue
+                    if all(abs(logf[idx] - logf[p]) >= min_sep_dec for p in peaks):
+                        peaks.append(idx)
+                    if len(peaks) >= 2:
+                        break
+
+            # Build guesses
+            R1_guess, R2_guess = float(max(rct_guess * 0.6, 1.0)), float(max(rct_guess * 0.4, 1.0))
+            C1_guess, C2_guess = float(max(c_guess, 1e-8)), float(max(c_guess, 1e-8))
+
+            if len(peaks) >= 1:
+                f_pk1 = float(f_use[peaks[0]])
+                tau1 = 1.0 / (2.0 * math.pi * max(f_pk1, 1e-12))
+                R1_pre = float(max(2.0 * zim_smooth[peaks[0]], 1e-6))
+            else:
+                f_pk1 = float(f_peak) if ("f_peak" in locals() and np.isfinite(f_peak)) else float('nan')
+                tau1 = 1.0 / (2.0 * math.pi * max(f_pk1, 1e-12)) if np.isfinite(f_pk1) else 1.0
+                R1_pre = float(max(rct_guess * 0.7, 1.0))
+
+            if len(peaks) >= 2:
+                f_pk2 = float(f_use[peaks[1]])
+                tau2 = 1.0 / (2.0 * math.pi * max(f_pk2, 1e-12))
+                R2_pre = float(max(2.0 * zim_smooth[peaks[1]], 1e-6))
+            else:
+                # Place a second arc roughly one decade lower in frequency
+                tau2 = tau1 * 10.0
+                R2_pre = float(max(rct_guess * 0.3, 1.0))
+
+            # Scale R1,R2 so that R1+R2 ~= total diameter (lf-hf)
+            r_sum_pre = R1_pre + R2_pre
+            if np.isfinite(r_sum_pre) and r_sum_pre > 0 and np.isfinite(rct_guess) and rct_guess > 0:
+                scale_r = float(rct_guess / r_sum_pre)
+                R1_guess = float(max(R1_pre * scale_r, 1.0))
+                R2_guess = float(max(R2_pre * scale_r, 1.0))
+
+            # Capacitances from tau = R*C
+            C1_guess = float(max(min(tau1 / max(R1_guess, 1e-6), 1e-1), 1e-9))
+            C2_guess = float(max(min(tau2 / max(R2_guess, 1e-6), 1e-1), 1e-9))
+
+            # Final guardrails
+            R1_guess = float(max(min(R1_guess, 1e7), 1e-3))
+            R2_guess = float(max(min(R2_guess, 1e7), 1e-3))
+
+            guess = [
+                float(max(rs_guess, 1e-3)),
+                R1_guess,
+                C1_guess,
+                R2_guess,
+                C2_guess,
+            ]
+        elif circuit_str == 'R0-p(R1,CPE1)-p(R2,CPE2)':
+            # Two CPE arcs: estimate R1,R2 from peaks; alpha~0.85; Q from f_peak
+            logf = np.log10(np.maximum(f_use, 1e-12))
+            zim_pos = -Zim_use
+            zim_smooth = pd.Series(zim_pos).rolling(window=max(5, len(zim_pos) // 50), center=True, min_periods=1).median().to_numpy()
+
+            candidate_idx = []
+            for i in range(1, len(zim_smooth) - 1):
+                if zim_smooth[i] >= zim_smooth[i - 1] and zim_smooth[i] >= zim_smooth[i + 1]:
+                    candidate_idx.append(i)
+            if not candidate_idx and len(zim_smooth):
+                candidate_idx = [int(np.nanargmax(zim_smooth))]
+
+            peaks: List[int] = []
+            if candidate_idx:
+                amp_thr = 0.10 * float(np.nanmax(zim_smooth))
+                cand_sorted = sorted(candidate_idx, key=lambda k: float(zim_smooth[k]), reverse=True)
+                min_sep_dec = 0.20
+                for idx in cand_sorted:
+                    if not np.isfinite(zim_smooth[idx]) or zim_smooth[idx] < amp_thr:
+                        continue
+                    if all(abs(logf[idx] - logf[p]) >= min_sep_dec for p in peaks):
+                        peaks.append(idx)
+                    if len(peaks) >= 2:
+                        break
+
+            # Rough R estimates from peak heights and total diameter scaling
+            if len(peaks) >= 1:
+                f_pk1 = float(f_use[peaks[0]])
+                R1_pre = float(max(2.0 * zim_smooth[peaks[0]], 1e-6))
+            else:
+                f_pk1 = float(f_use[int(np.argmax(zim_smooth))]) if len(zim_smooth) else float('nan')
+                R1_pre = float(max(rct_guess * 0.7, 1.0))
+            if len(peaks) >= 2:
+                f_pk2 = float(f_use[peaks[1]])
+                R2_pre = float(max(2.0 * zim_smooth[peaks[1]], 1e-6))
+            else:
+                f_pk2 = f_pk1 / 10.0 if np.isfinite(f_pk1) and f_pk1 > 0 else 1.0
+                R2_pre = float(max(rct_guess * 0.3, 1.0))
+
+            r_sum_pre = R1_pre + R2_pre
+            if np.isfinite(r_sum_pre) and r_sum_pre > 0 and np.isfinite(rct_guess) and rct_guess > 0:
+                scale_r = float(rct_guess / r_sum_pre)
+                R1_guess = float(max(R1_pre * scale_r, 1.0))
+                R2_guess = float(max(R2_pre * scale_r, 1.0))
+            else:
+                R1_guess = float(max(rct_guess * 0.6, 1.0))
+                R2_guess = float(max(rct_guess * 0.4, 1.0))
+
+            alpha1_guess = 0.85
+            alpha2_guess = 0.85
+            # Q from (omega_pk)^alpha = 1/(R*Q)  => Q = 1/(R * omega_pk^alpha)
+            w1 = 2.0 * math.pi * max(f_pk1, 1e-12)
+            w2 = 2.0 * math.pi * max(f_pk2, 1e-12)
+            Q1_guess = float(max(min(1.0 / (max(R1_guess, 1e-6) * (w1 ** alpha1_guess)), 1e-1), 1e-10))
+            Q2_guess = float(max(min(1.0 / (max(R2_guess, 1e-6) * (w2 ** alpha2_guess)), 1e-1), 1e-10))
+
+            # Guardrails
+            R1_guess = float(max(min(R1_guess, 1e7), 1e-3))
+            R2_guess = float(max(min(R2_guess, 1e7), 1e-3))
+
+            guess = [
+                float(max(rs_guess, 1e-3)),
+                R1_guess,
+                Q1_guess,
+                float(min(max(alpha1_guess, 0.5), 0.99)),
+                R2_guess,
+                Q2_guess,
+                float(min(max(alpha2_guess, 0.5), 0.99)),
             ]
         else:
             guess = [float(max(rs_guess, 1e-3))]
@@ -168,13 +316,82 @@ def fit_with_impedance_py(df: pd.DataFrame, circuit_str: str = 'R0-p(R1,C1)-W1',
     elif len(guess) > param_len and param_len > 0:
         guess = guess[:param_len]
 
+    # Construct simple physical bounds to stabilize the fit
+    bounds = None
+    try:
+        if circuit_str == 'R0-p(R1,C1)-W1':
+            rs_lo = max(1e-6, rs_guess * 0.01 if np.isfinite(rs_guess) else 1e-6)
+            rct_lo = 1e-6
+            c_lo = 1e-10
+            sigma_lo = 1e-6
+            rs_hi = max(rs_lo * 100.0, 1e3)
+            rct_hi = max(rct_guess * 100.0, 1e3)
+            c_hi = 1e-1
+            sigma_hi = 1e3
+            bounds = ([rs_lo, rct_lo, c_lo, sigma_lo], [rs_hi, rct_hi, c_hi, sigma_hi])
+        elif circuit_str == 'R0-p(R1,CPE1)-W1':
+            rs_lo = max(1e-6, rs_guess * 0.01 if np.isfinite(rs_guess) else 1e-6)
+            r_lo = 1e-6
+            q_lo = 1e-10
+            a_lo = 0.5
+            sigma_lo = 1e-6
+            rs_hi = max(rs_lo * 100.0, 1e6)
+            r_hi = max(rct_guess * 100.0, 1e8)
+            q_hi = 1e-1
+            a_hi = 0.99
+            sigma_hi = 1e3
+            bounds = ([rs_lo, r_lo, q_lo, a_lo, sigma_lo], [rs_hi, r_hi, q_hi, a_hi, sigma_hi])
+        elif circuit_str == 'R0-p(R1,C1)-p(R2,C2)':
+            rs_lo = max(1e-6, rs_guess * 0.01 if np.isfinite(rs_guess) else 1e-6)
+            r_lo = 1e-6
+            c_lo = 1e-10
+            rs_hi = max(rs_lo * 100.0, 1e6)
+            r_hi = max(rct_guess * 100.0, 1e8)
+            c_hi = 1e-1
+            bounds = ([rs_lo, r_lo, c_lo, r_lo, c_lo], [rs_hi, r_hi, c_hi, r_hi, c_hi])
+        elif circuit_str == 'R0-p(R1,CPE1)-p(R2,CPE2)':
+            rs_lo = max(1e-6, rs_guess * 0.01 if np.isfinite(rs_guess) else 1e-6)
+            r_lo = 1e-6
+            q_lo = 1e-10
+            a_lo = 0.5
+            rs_hi = max(rs_lo * 100.0, 1e6)
+            r_hi = max(rct_guess * 100.0, 1e8)
+            q_hi = 1e-1
+            a_hi = 0.99
+            bounds = ([rs_lo, r_lo, q_lo, a_lo, r_lo, q_lo, a_lo], [rs_hi, r_hi, q_hi, a_hi, r_hi, q_hi, a_hi])
+    except Exception:
+        bounds = None
+
     try:
         circuit = CustomCircuit(initial_guess=guess, circuit=circuit_str)
     except Exception:
         return _fallback_result()
 
     try:
-        fitted = circuit.fit(f_use, Z_use)
+        # Frequency weighting: down-weight low-frequency large-|Z| points to help resolve HF arc
+        weights = None
+        try:
+            mag = np.abs(Z_use)
+            weights = 1.0 / np.maximum(mag, np.median(mag) * 1e-3)
+        except Exception:
+            weights = None
+
+        if bounds is not None:
+            try:
+                if weights is not None:
+                    fitted = circuit.fit(f_use, Z_use, bounds=bounds, weights=weights)
+                else:
+                    fitted = circuit.fit(f_use, Z_use, bounds=bounds)
+            except TypeError:
+                fitted = circuit.fit(f_use, Z_use)
+        else:
+            try:
+                if weights is not None:
+                    fitted = circuit.fit(f_use, Z_use, weights=weights)
+                else:
+                    fitted = circuit.fit(f_use, Z_use)
+            except TypeError:
+                fitted = circuit.fit(f_use, Z_use)
     except Exception:
         return _fallback_result()
 
@@ -188,15 +405,53 @@ def fit_with_impedance_py(df: pd.DataFrame, circuit_str: str = 'R0-p(R1,C1)-W1',
     rchi2 = ss_res / dof
 
     Rs_raw = float(params_raw[0]) if params_raw.size >= 1 else float('nan')
-    Rct_raw = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
-    Cdl_raw = float(params_raw[2]) if params_raw.size >= 3 else None
-    sigma_raw = float(params_raw[3]) if ('W' in circuit_str and params_raw.size >= 4) else None
+    # Map parameters by circuit
+    if circuit_str == 'R0-p(R1,C1)-W1':
+        Rct_raw = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
+        Cdl_raw = float(params_raw[2]) if params_raw.size >= 3 else None
+        sigma_raw = float(params_raw[3]) if params_raw.size >= 4 else None
+        Q_raw, alpha_raw = None, None
+    elif circuit_str == 'R0-p(R1,CPE1)-W1':
+        Rct_raw = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
+        Q_raw = float(params_raw[2]) if params_raw.size >= 3 else None
+        alpha_raw = float(params_raw[3]) if params_raw.size >= 4 else None
+        sigma_raw = float(params_raw[4]) if params_raw.size >= 5 else None
+        Cdl_raw = None
+    elif circuit_str == 'R0-p(R1,C1)-p(R2,C2)':
+        r1 = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
+        c1 = float(params_raw[2]) if params_raw.size >= 3 else float('nan')
+        r2 = float(params_raw[3]) if params_raw.size >= 4 else float('nan')
+        c2 = float(params_raw[4]) if params_raw.size >= 5 else float('nan')
+        Rct_raw = (r1 + r2) if np.isfinite(r1) and np.isfinite(r2) else float('nan')
+        Cdl_raw = c1  # store first branch C as representative Cdl
+        sigma_raw = None
+        Q_raw, alpha_raw = None, None
+    elif circuit_str == 'R0-p(R1,CPE1)-p(R2,CPE2)':
+        r1 = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
+        q1 = float(params_raw[2]) if params_raw.size >= 3 else float('nan')
+        a1 = float(params_raw[3]) if params_raw.size >= 4 else float('nan')
+        r2 = float(params_raw[4]) if params_raw.size >= 5 else float('nan')
+        q2 = float(params_raw[5]) if params_raw.size >= 6 else float('nan')
+        a2 = float(params_raw[6]) if params_raw.size >= 7 else float('nan')
+        Rct_raw = (r1 + r2) if np.isfinite(r1) and np.isfinite(r2) else float('nan')
+        Cdl_raw = None
+        sigma_raw = None
+        # store first branch Q, alpha as representatives
+        Q_raw = q1
+        alpha_raw = a1
+    else:
+        Rct_raw = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
+        Cdl_raw = float(params_raw[2]) if params_raw.size >= 3 else None
+        sigma_raw = float(params_raw[3]) if ('W' in circuit_str and params_raw.size >= 4) else None
+        Q_raw, alpha_raw = None, None
 
     scale = GC_AREA_CM2
     Rs_area = Rs_raw * scale if np.isfinite(Rs_raw) else float('nan')
     Rct_area = Rct_raw * scale if np.isfinite(Rct_raw) else float('nan')
     Cdl_area = Cdl_raw / scale if (Cdl_raw is not None and np.isfinite(Cdl_raw) and Cdl_raw > 0) else None
     sigma_area = sigma_raw * scale if (sigma_raw is not None and np.isfinite(sigma_raw)) else None
+    Q_area = Q_raw / scale if (Q_raw is not None and np.isfinite(Q_raw) and Q_raw > 0) else None
+    alpha_val = float(alpha_raw) if (alpha_raw is not None and np.isfinite(alpha_raw)) else None
 
     fit_impedance_area = Z_model * scale
 
@@ -206,8 +461,8 @@ def fit_with_impedance_py(df: pd.DataFrame, circuit_str: str = 'R0-p(R1,C1)-W1',
         Rct=Rct_area,
         Cdl=Cdl_area,
         sigma=sigma_area,
-        Q=None,
-        alpha=None,
+        Q=Q_area,
+        alpha=alpha_val,
         rchi2=float(rchi2),
         n_points=len(f_use),
         raw_parameters=params_raw,
@@ -430,7 +685,7 @@ def analyze_task32_eis() -> None:
         z_im = pd.to_numeric(df[im_col], errors='coerce').to_numpy() * GC_AREA_CM2
         ax.plot(z_re, z_im, marker='o', ms=2.5, lw=0.8, label=label)
 
-        chosen = fit_with_impedance_py(df, circuit_str='R0-p(R1,C1)-W1')
+        chosen = fit_with_impedance_py(df, circuit_str='R0-p(R1,CPE1)-W1')
         z_fit_plot = None
         if chosen.fitted_impedance is not None:
             z_fit = np.asarray(chosen.fitted_impedance)
@@ -482,6 +737,25 @@ def analyze_task32_eis() -> None:
                 Rs_best, Rct_best = Rs_fit, Rct_fit
         Cdl_per_cm2 = float(1.0 / (2.0 * math.pi * f_peak * Rct_best)) if (np.isfinite(f_peak) and Rct_best and Rct_best > 0) else Cdl_h
 
+        # Effective Cdl from CPE if present
+        if (chosen.Cdl is not None) and np.isfinite(chosen.Cdl) and (chosen.Cdl > 0):
+            cdl_nls_cm2 = float(chosen.Cdl)
+        elif (
+            (chosen.Q is not None)
+            and (chosen.alpha is not None)
+            and np.isfinite(chosen.Q)
+            and np.isfinite(chosen.alpha)
+            and (0.5 <= float(chosen.alpha) < 1.0)
+            and np.isfinite(chosen.Rct)
+            and (chosen.Rct > 0)
+        ):
+            a = float(chosen.alpha)
+            q = float(chosen.Q)
+            r = float(chosen.Rct)
+            cdl_nls_cm2 = float((q ** (1.0 / a)) / (r ** (1.0 - 1.0 / a)))
+        else:
+            cdl_nls_cm2 = float('nan')
+
         Rct_for_k0 = chosen.Rct if np.isfinite(chosen.Rct) and (chosen.Rct > 0) else Rct_best
         k0 = (R_GAS * T_K) / ((N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * Rct_for_k0) if (Rct_for_k0 and Rct_for_k0 > 0) else np.nan
 
@@ -502,7 +776,7 @@ def analyze_task32_eis() -> None:
                 D_Warburg_cm2_s=D_w,
                 Rs_area_nls_Ohm_cm2=chosen.Rs,
                 Rct_area_nls_Ohm_cm2=chosen.Rct,
-                Cdl_nls_F_cm2=(chosen.Cdl if chosen.Cdl is not None else float('nan')),
+                Cdl_nls_F_cm2=cdl_nls_cm2,
                 sigma_Ohm_cm2_s05=(chosen.sigma if chosen.sigma is not None else float('nan')),
                 rchi2=chosen.rchi2,
                 model_label=chosen.model,
