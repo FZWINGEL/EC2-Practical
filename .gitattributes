@@ -1,0 +1,14 @@
+# Normalize text; let Git convert on checkout
+*               text=auto
+
+# Force LF for source & docs
+*.py            text eol=lf
+*.sh            text eol=lf
+*.md            text eol=lf
+*.yml           text eol=lf
+.gitattributes  text eol=lf
+.gitignore      text eol=lf
+
+# Keep Windows-native endings where it matters
+*.bat           text eol=crlf
+*.ps1           text eol=crlf
