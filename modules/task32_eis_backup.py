@@ -29,12 +29,10 @@ except Exception:  # pragma: no cover - allow running without SciPy
 try:
     from impedance import preprocessing
     from impedance.models.circuits import CustomCircuit
-    from impedance.models.circuits.fitting import calculateCircuitLength
     from impedance.validation import linKK
 except ImportError:
     preprocessing = None
     CustomCircuit = None
-    calculateCircuitLength = None
     linKK = None
 
 @dataclass
@@ -48,174 +46,44 @@ class ECFFit:
     alpha: Optional[float]
     rchi2: float
     n_points: int
-    raw_parameters: Optional[np.ndarray] = None
-    fitted_freq_hz: Optional[np.ndarray] = None
-    fitted_impedance: Optional[np.ndarray] = None
 
 def fit_with_impedance_py(df: pd.DataFrame, circuit_str: str = 'R0-p(R1,C1)-W1', initial_guess: Optional[List[float]] = None) -> ECFFit:
     if CustomCircuit is None:
-        return ECFFit(
-            model=circuit_str,
-            Rs=float('nan'),
-            Rct=float('nan'),
-            Cdl=None,
-            sigma=None,
-            Q=None,
-            alpha=None,
-            rchi2=float('nan'),
-            n_points=0,
-            raw_parameters=None,
-            fitted_freq_hz=None,
-            fitted_impedance=None,
-        )
+        return ECFFit(model=circuit_str, Rs=float("nan"), Rct=float("nan"), Cdl=None, sigma=None, Q=None, alpha=None, rchi2=float("nan"), n_points=0)
 
-    re_col = get_column(df, ['Re(Z)/Ohm']) or 'Re(Z)/Ohm'
-    im_col = get_column(df, ['-Im(Z)/Ohm']) or '-Im(Z)/Ohm'
-    f_col = get_column(df, ['freq/Hz']) or 'freq/Hz'
+    re_col = get_column(df, ["Re(Z)/Ohm"]) or "Re(Z)/Ohm"
+    im_col = get_column(df, ["-Im(Z)/Ohm"]) or "-Im(Z)/Ohm"
+    f_col = get_column(df, ["freq/Hz"]) or "freq/Hz"
 
-    f = pd.to_numeric(df[f_col], errors='coerce').to_numpy()
-    Zre = pd.to_numeric(df[re_col], errors='coerce').to_numpy()
-    Zim = -pd.to_numeric(df[im_col], errors='coerce').to_numpy()
+    f = pd.to_numeric(df[f_col], errors="coerce").to_numpy()
+    Zre = pd.to_numeric(df[re_col], errors="coerce").to_numpy()
+    Zim = -pd.to_numeric(df[im_col], errors="coerce").to_numpy()  # Note: impedance.py uses +Im convention
     mask = np.isfinite(f) & np.isfinite(Zre) & np.isfinite(Zim) & (f > 0)
     if not mask.any():
-        return ECFFit(
-            model=circuit_str,
-            Rs=float('nan'),
-            Rct=float('nan'),
-            Cdl=None,
-            sigma=None,
-            Q=None,
-            alpha=None,
-            rchi2=float('nan'),
-            n_points=0,
-            raw_parameters=None,
-            fitted_freq_hz=None,
-            fitted_impedance=None,
-        )
+        return ECFFit(model=circuit_str, Rs=float("nan"), Rct=float("nan"), Cdl=None, sigma=None, Q=None, alpha=None, rchi2=float("nan"), n_points=0)
 
-    order = np.argsort(f[mask])[::-1]
-    f_use = f[mask][order].astype(float)
-    Zre_use = Zre[mask][order].astype(float)
-    Zim_use = Zim[mask][order].astype(float)
-    Z_use = Zre_use + 1j * Zim_use
-
-    hf_window = max(3, len(Zre_use) // 6)
-    rs_guess = float(np.nanmedian(Zre_use[:hf_window])) if len(Zre_use) else float('nan')
-    lf_guess = float(np.nanmedian(Zre_use[-hf_window:])) if len(Zre_use) else float('nan')
-    if np.isfinite(rs_guess) and np.isfinite(lf_guess):
-        rct_guess = float(max(lf_guess - rs_guess, 1.0))
-    else:
-        rct_guess = 100.0
-
-    im_mag = np.abs(Zim_use)
-    idx_peak = int(np.nanargmax(im_mag)) if len(im_mag) else 0
-    f_peak = float(f_use[idx_peak]) if 0 <= idx_peak < len(f_use) else float('nan')
-    if np.isfinite(f_peak) and f_peak > 0 and rct_guess > 0:
-        c_guess = float(1.0 / (2.0 * math.pi * f_peak * rct_guess))
-    else:
-        c_guess = 1e-5
-
-    omega_low = 2.0 * math.pi * max(f_use[-1], 1e-3)
-    sigma_base = abs(lf_guess - rs_guess) if np.isfinite(lf_guess) and np.isfinite(rs_guess) else rct_guess
-    sigma_guess = float(max(sigma_base, 1.0) / max(np.sqrt(omega_low), 1e-6))
-    sigma_guess = max(sigma_guess, 1.0)
-
-    def _fallback_result() -> ECFFit:
-        rs_area = rs_guess * GC_AREA_CM2 if np.isfinite(rs_guess) else float('nan')
-        rct_area = rct_guess * GC_AREA_CM2 if np.isfinite(rct_guess) else float('nan')
-        cdl_area = c_guess / GC_AREA_CM2 if np.isfinite(c_guess) and c_guess > 0 else None
-        sigma_area = sigma_guess * GC_AREA_CM2 if np.isfinite(sigma_guess) else None
-        return ECFFit(
-            model=circuit_str,
-            Rs=rs_area,
-            Rct=rct_area,
-            Cdl=cdl_area,
-            sigma=sigma_area,
-            Q=None,
-            alpha=None,
-            rchi2=float('nan'),
-            n_points=len(f_use),
-            raw_parameters=None,
-            fitted_freq_hz=None,
-            fitted_impedance=None,
-        )
-
-    guess = list(initial_guess) if initial_guess else []
-    if not guess:
-        if circuit_str == 'R0-p(R1,C1)-W1' or ('W' in circuit_str and 'p(R1,C1)' in circuit_str):
-            guess = [
-                float(max(rs_guess, 1e-3)),
-                float(max(rct_guess, 1.0)),
-                float(max(c_guess, 1e-8)),
-                float(max(sigma_guess, 1.0)),
-            ]
-        elif circuit_str == 'R0-p(R1,C1)-p(R2,C2)':
-            r_branch = float(max(rct_guess, 1.0))
-            half = max(r_branch / 2.0, 1.0)
-            guess = [
-                float(max(rs_guess, 1e-3)),
-                float(half),
-                float(max(c_guess, 1e-8)),
-                float(max(r_branch - half, 1.0)),
-                float(max(c_guess, 1e-8)),
-            ]
+    f_use, Z_use = f[mask], Zre[mask] + 1j * Zim[mask]
+    if initial_guess is None:
+        if 'W' in circuit_str:
+            initial_guess = [10, 100, 1e-6, 100]
         else:
-            guess = [float(max(rs_guess, 1e-3))]
+            initial_guess = [10, 100, 1e-6, 200, 1e-5]
+    circuit = CustomCircuit(initial_guess=initial_guess, circuit=circuit_str)
+    fit_params = circuit.fit(f_use, Z_use)
 
-    param_len = int(calculateCircuitLength(circuit_str)) if calculateCircuitLength is not None else len(guess)
-    if len(guess) < param_len:
-        guess.extend([float(max(c_guess, 1e-8))] * (param_len - len(guess)))
-    elif len(guess) > param_len and param_len > 0:
-        guess = guess[:param_len]
-
-    try:
-        circuit = CustomCircuit(initial_guess=guess, circuit=circuit_str)
-    except Exception:
-        return _fallback_result()
-
-    try:
-        fitted = circuit.fit(f_use, Z_use)
-    except Exception:
-        return _fallback_result()
-
-    params_raw = np.array(fitted.parameters_, dtype=float)
-    Z_model = fitted.predict(f_use)
-
-    res_real = Z_model.real - Z_use.real
-    res_imag = Z_model.imag - Z_use.imag
-    ss_res = float(np.sum(res_real**2 + res_imag**2))
-    dof = max(1, 2 * len(f_use) - params_raw.size)
+    Rs = fit_params.parameters_[0]
+    Rct = fit_params.parameters_[1]
+    Cdl = fit_params.parameters_[2]
+    sigma = fit_params.parameters_[3] if 'W' in circuit_str else None
+    Zmodel = fit_params.predict(f_use)
+    res_real = Zmodel.real - Z_use.real
+    res_imag = Zmodel.imag - Z_use.imag
+    ss_res = np.sum(res_real**2 + res_imag**2)
+    dof = max(1, 2 * len(f_use) - len(fit_params.parameters_))
     rchi2 = ss_res / dof
 
-    Rs_raw = float(params_raw[0]) if params_raw.size >= 1 else float('nan')
-    Rct_raw = float(params_raw[1]) if params_raw.size >= 2 else float('nan')
-    Cdl_raw = float(params_raw[2]) if params_raw.size >= 3 else None
-    sigma_raw = float(params_raw[3]) if ('W' in circuit_str and params_raw.size >= 4) else None
+    return ECFFit(model=circuit_str, Rs=Rs, Rct=Rct, Cdl=Cdl, sigma=sigma, Q=None, alpha=None, rchi2=rchi2, n_points=len(f_use))
 
-    scale = GC_AREA_CM2
-    Rs_area = Rs_raw * scale if np.isfinite(Rs_raw) else float('nan')
-    Rct_area = Rct_raw * scale if np.isfinite(Rct_raw) else float('nan')
-    Cdl_area = Cdl_raw / scale if (Cdl_raw is not None and np.isfinite(Cdl_raw) and Cdl_raw > 0) else None
-    sigma_area = sigma_raw * scale if (sigma_raw is not None and np.isfinite(sigma_raw)) else None
-
-    fit_impedance_area = Z_model * scale
-
-    result = ECFFit(
-        model=circuit_str,
-        Rs=Rs_area,
-        Rct=Rct_area,
-        Cdl=Cdl_area,
-        sigma=sigma_area,
-        Q=None,
-        alpha=None,
-        rchi2=float(rchi2),
-        n_points=len(f_use),
-        raw_parameters=params_raw,
-        fitted_freq_hz=f_use,
-        fitted_impedance=fit_impedance_area,
-    )
-    result.parameters_ = params_raw
-    return result
 
 @dataclass
 class EISResult:
@@ -418,51 +286,51 @@ def analyze_task32_eis() -> None:
             print(f"[EIS] Failed to read {path.name}: {exc}")
             continue
 
-        re_col = get_column(df, ['Re(Z)/Ohm']) or 'Re(Z)/Ohm'
-        im_col = get_column(df, ['-Im(Z)/Ohm']) or '-Im(Z)/Ohm'
-        f_col = get_column(df, ['freq/Hz']) or 'freq/Hz'
+        re_col = get_column(df, ["Re(Z)/Ohm"]) or "Re(Z)/Ohm"
+        im_col = get_column(df, ["-Im(Z)/Ohm"]) or "-Im(Z)/Ohm"
+        f_col = get_column(df, ["freq/Hz"]) or "freq/Hz"
         if re_col not in df or im_col not in df:
             print(f"[EIS] Missing impedance columns in {path.name}; skipping.")
             continue
 
-        label = label_from_filename(path)
-        z_re = pd.to_numeric(df[re_col], errors='coerce').to_numpy() * GC_AREA_CM2
-        z_im = pd.to_numeric(df[im_col], errors='coerce').to_numpy() * GC_AREA_CM2
-        ax.plot(z_re, z_im, marker='o', ms=2.5, lw=0.8, label=label)
+        z_re = pd.to_numeric(df[re_col], errors="coerce").to_numpy() * GC_AREA_CM2
+        z_im = pd.to_numeric(df[im_col], errors="coerce").to_numpy() * GC_AREA_CM2
+        ax.plot(z_re, z_im, marker="o", ms=2.5, lw=0.8, label=label_from_filename(path))
+
+        f_all = pd.to_numeric(df[f_col], errors="coerce").to_numpy()
+        mask = np.isfinite(f_all) & (f_all > 0)
+        omega_all = 2 * np.pi * f_all[mask]
 
         chosen = fit_with_impedance_py(df, circuit_str='R0-p(R1,C1)-W1')
-        z_fit_plot = None
-        if chosen.fitted_impedance is not None:
-            z_fit = np.asarray(chosen.fitted_impedance)
-            finite_mask = np.isfinite(z_fit.real) & np.isfinite(z_fit.imag)
-            if finite_mask.any():
-                z_fit_plot = z_fit[finite_mask]
-                ax.plot(z_fit_plot.real, -z_fit_plot.imag, lw=1.2, alpha=0.9, label=f"{label} (fit)")
 
         fig_debug, ax_debug = plt.subplots(figsize=(5.0, 4.0))
         ax_debug.plot(z_re, z_im, 'o', ms=3, label='data')
-        if z_fit_plot is not None:
-            ax_debug.plot(z_fit_plot.real, -z_fit_plot.imag, '-', lw=1.5, label='fit')
+
+        try:
+            f_all = pd.to_numeric(df[f_col], errors="coerce").to_numpy()
+            mask = np.isfinite(f_all) & (f_all > 0)
+            omega_all = 2 * np.pi * f_all[mask]
+            if chosen.Rs is not None:
+                circuit_fitted = CustomCircuit(circuit='R0-p(R1,C1)-W1', parameters=[chosen.Rs, chosen.Rct, chosen.Cdl or 1e-6, chosen.sigma or 100])
+                Zmodel = circuit_fitted.predict(f_all[mask])
+                ax.plot(Zmodel.real, Zmodel.imag, lw=1.2, alpha=0.9)
+                ax_debug.plot(Zmodel.real, Zmodel.imag, '-', lw=1.5, label='fit')
+        except Exception:
+            pass
 
         ax_debug.set_xlabel("Z' (ohm cm^2)")
         ax_debug.set_ylabel("-Z'' (ohm cm^2)")
-        ax_debug.set_title(f"Debug EIS Fit: {label}")
-        ax_debug.text(
-            0.05,
-            0.90,
-            f'rchi2 = {chosen.rchi2:.2e}\nN = {chosen.n_points}',
-            transform=ax_debug.transAxes,
-            fontsize=10,
-        )
+        ax_debug.set_title(f"Debug EIS Fit: {label_from_filename(path)}")
+        ax_debug.text(0.05, 0.90, f'rchi2 = {chosen.rchi2:.2e}', transform=ax_debug.transAxes, fontsize=10)
         ax_debug.legend()
         beautify_axes(ax_debug)
-        ax_debug.set_aspect('equal', adjustable='box')
-        fig_debug.savefig(debug_dir / f'debug_EIS_fit_{label}.png', dpi=150, bbox_inches='tight')
+        ax_debug.set_aspect("equal", adjustable="box")
+        fig_debug.savefig(debug_dir / f"debug_EIS_fit_{label_from_filename(path)}.png", dpi=150, bbox_inches="tight")
         plt.close(fig_debug)
 
         Rs_heur, Rct_heur, Cdl_h, f_peak, z_re_h, z_im_h, f_hz_h, (idx_peak1, start_idx, end_idx) = _extract_eis_parameters_heuristic(df)
 
-        Rs_fit, Rct_fit = float('nan'), float('nan')
+        Rs_fit, Rct_fit = float("nan"), float("nan")
         if (end_idx > start_idx) and (end_idx - start_idx + 1) >= 5 and np.isfinite(z_re_h[start_idx : end_idx + 1]).all() and np.isfinite(z_im_h[start_idx : end_idx + 1]).all():
             x_arc = z_re_h[start_idx : end_idx + 1]
             y_arc = z_im_h[start_idx : end_idx + 1]
@@ -476,21 +344,32 @@ def analyze_task32_eis() -> None:
                     Rct_fit = float(max(x_left, x_right) - min(x_left, x_right))
 
         Rs_best, Rct_best = Rs_heur, Rct_heur
-        zim_max = float(np.nanmax(z_im_h)) if len(z_im_h) else float('nan')
+        zim_max = float(np.nanmax(z_im_h)) if len(z_im_h) else float("nan")
         if np.isfinite(Rct_fit) and Rct_fit > 0:
             if not np.isfinite(zim_max) or (0.3 <= (Rct_fit / max(zim_max * 2.0, 1e-9)) <= 3.0):
                 Rs_best, Rct_best = Rs_fit, Rct_fit
         Cdl_per_cm2 = float(1.0 / (2.0 * math.pi * f_peak * Rct_best)) if (np.isfinite(f_peak) and Rct_best and Rct_best > 0) else Cdl_h
 
+        try:
+            f_all = pd.to_numeric(df[f_col], errors="coerce").to_numpy()
+            mask = np.isfinite(f_all) & (f_all > 0)
+            omega_all = 2 * np.pi * f_all[mask]
+            if chosen.Rs is not None:
+                circuit_fitted = CustomCircuit(circuit='R0-p(R1,C1)-W1', parameters=[chosen.Rs, chosen.Rct, chosen.Cdl or 1e-6, chosen.sigma or 100])
+                Zmodel = circuit_fitted.predict(f_all[mask])
+                ax.plot(Zmodel.real, Zmodel.imag, lw=1.2, alpha=0.9)
+        except Exception:
+            pass
+
         Rct_for_k0 = chosen.Rct if np.isfinite(chosen.Rct) and (chosen.Rct > 0) else Rct_best
         k0 = (R_GAS * T_K) / ((N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * Rct_for_k0) if (Rct_for_k0 and Rct_for_k0 > 0) else np.nan
 
         Aw, D_w = _warburg_fit(df)
-        add_diffusion_coefficient(D_w, 'Warburg')
+        add_diffusion_coefficient(D_w, "Warburg")
 
         results.append(
             EISResult(
-                label=label,
+                label=label_from_filename(path),
                 Rs_area_fit_Ohm_cm2=Rs_fit,
                 Rct_area_fit_Ohm_cm2=Rct_fit,
                 Rs_area_heur_Ohm_cm2=Rs_heur,
@@ -502,12 +381,13 @@ def analyze_task32_eis() -> None:
                 D_Warburg_cm2_s=D_w,
                 Rs_area_nls_Ohm_cm2=chosen.Rs,
                 Rct_area_nls_Ohm_cm2=chosen.Rct,
-                Cdl_nls_F_cm2=(chosen.Cdl if chosen.Cdl is not None else float('nan')),
-                sigma_Ohm_cm2_s05=(chosen.sigma if chosen.sigma is not None else float('nan')),
+                Cdl_nls_F_cm2=(chosen.Cdl if chosen.Cdl is not None else float("nan")),
+                sigma_Ohm_cm2_s05=(chosen.sigma if chosen.sigma is not None else float("nan")),
                 rchi2=chosen.rchi2,
                 model_label=chosen.model,
             )
         )
+
     ax.set_xlabel("Z' (ohm cm^2)")
     ax.set_ylabel("-Z'' (ohm cm^2)")
     ax.set_title("Task 3.2 - EIS Nyquist (area-normalized)")
@@ -561,9 +441,4 @@ def analyze_task32_eis() -> None:
             ]
         )
         write_csv(df_eis, "T3.2_EIS_summary.csv")
-
-
-
-
-
 

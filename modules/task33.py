@@ -328,22 +328,23 @@ def analyze_task33_lsv_and_eis() -> None:
                 }
             )
 
+            z_fit_plot = None
+            if fit.fitted_impedance is not None:
+                z_model = np.asarray(fit.fitted_impedance)
+                mask_model = np.isfinite(z_model.real) & np.isfinite(z_model.imag)
+                if mask_model.any():
+                    z_fit_plot = z_model[mask_model]
+                    ax.plot(z_fit_plot.real, -z_fit_plot.imag, lw=1.2, alpha=0.9, label=f"{label} (fit)")
+
             fig_debug, ax_debug = plt.subplots(figsize=(5.0, 4.0))
             ax_debug.plot(z_re, z_im, 'o', ms=3, label='data')
-
-            if fit.Rs is not None:
-                try:
-                    from impedance.models.circuits import CustomCircuit
-                    circuit_fitted = CustomCircuit(circuit='R0-p(R1,C1)-p(R2,C2)', parameters=fit.parameters_)
-                    Zmodel = circuit_fitted.predict(f_all[mask])
-                    ax_debug.plot(Zmodel.real, Zmodel.imag, '-', lw=1.5, label='fit')  # impedance.py uses +Im
-                except:
-                    pass
+            if z_fit_plot is not None:
+                ax_debug.plot(z_fit_plot.real, -z_fit_plot.imag, '-', lw=1.5, label='fit')
 
             ax_debug.set_xlabel("Z' (ohm cm^2)")
             ax_debug.set_ylabel("-Z'' (ohm cm^2)")
             ax_debug.set_title(f"Debug PEIS Fit: {label}")
-            ax_debug.text(0.05, 0.90, f'rchi2 = {fit.rchi2:.2e}', transform=ax_debug.transAxes, fontsize=10)
+            ax_debug.text(0.05, 0.90, f'rchi2 = {fit.rchi2:.2e}\nN = {fit.n_points}', transform=ax_debug.transAxes, fontsize=10)
             ax_debug.legend()
             beautify_axes(ax_debug)
             ax_debug.set_aspect("equal", adjustable="box")
