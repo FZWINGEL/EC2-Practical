@@ -43,10 +43,9 @@ C_BULK_mM = 2.3  # for Sand's eq. numeric form in the script (mM)
 #
 # Note: The exact ρ for 2.0 M KCl @ 25 °C varies slightly by source (~1.10–1.12 g/mL).
 #       Using ρ = 1.10 g/mL gives m ≈ 2.103 mol/kg and ν ≈ 0.008404 cm²/s.
-#       If you have a measured density, set KCL_DENSITY_2M_25C_G_PER_ML accordingly.
 
 KCL_MOLAR_MASS_GPMOL = 74.5513      # g/mol
-KCL_DENSITY_2M_25C_G_PER_ML = 1.10  # g/mL (assumption; adjust if you know your solution density)
+KCL_DENSITY_2M_25C_G_PER_ML = 1.10  # g/mL
 M_KCL_MOLARITY = 2.0                 # mol/L
 
 # 1) M -> m
@@ -89,8 +88,11 @@ def setup_plot_style() -> None:
         "grid.alpha": 0.3,
         "axes.linewidth": 0.8,
         "lines.linewidth": 1.2,
-        "legend.frameon": False,
+        "legend.frameon": True,
         "legend.fontsize": 9,
+        "legend.framealpha": 0.85,
+        "legend.edgecolor": "#00000055",
+        "legend.title_fontsize": 9,
         "savefig.dpi": 300,
     })
 
@@ -305,19 +307,21 @@ def analyze_task32_cvs() -> None:
         i_A = i_mA / 1000.0
         j_mA_cm2 = i_mA / GC_AREA_CM2
 
+        # Scan rate estimate for legend (if time available)
+        scan_rate = None
+        if t_col:
+            t_s = pd.to_numeric(df_use[t_col], errors="coerce").to_numpy()
+            scan_rate = estimate_scan_rate_Vs(e_v, t_s)
+        legend_label = (f"v≈{(scan_rate*1000):.0f} mV/s" if (scan_rate is not None and np.isfinite(scan_rate))
+                        else label_from_filename(path))
+
         # Plot overlay (area-normalized current)
-        ax.plot(e_v, j_mA_cm2, lw=1.1, label=label_from_filename(path))
+        ax.plot(e_v, j_mA_cm2, lw=1.1, label=legend_label)
 
         # Peak analysis
         (Epa, ipa_A), (Epc, ipc_A) = _find_cv_extrema(e_v, i_A)
         dEp = Epa - Epc
         ratio = abs(ipa_A) / abs(ipc_A) if ipc_A != 0 else np.nan
-
-        # Scan rate estimate
-        scan_rate = None
-        if t_col:
-            t_s = pd.to_numeric(df_use[t_col], errors="coerce").to_numpy()
-            scan_rate = estimate_scan_rate_Vs(e_v, t_s)
 
         rows.append(CVPeak(
             scan_rate_Vs=scan_rate if scan_rate is not None else float("nan"),
@@ -329,7 +333,7 @@ def analyze_task32_cvs() -> None:
     ax.set_xlabel("E (V vs Ag/AgCl)")
     ax.set_ylabel("j (mA cm$^{-2}$)")
     ax.set_title("Task 3.2 – CVs (last cycle per file)")
-    ax.legend(fontsize=8, ncol=2, title="Files", title_fontsize=9)
+    ax.legend(title="Scan rate (approx.)", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     safe_save(fig, "T3.2_CV_overlay.png")
 
@@ -399,7 +403,7 @@ def analyze_task32_cvs() -> None:
             ax_rs.set_xlabel(r"$\sqrt{v}$ (V$^{1/2}$ s$^{-1/2}$)")
             ax_rs.set_ylabel(r"$i_p$ (mA)")
             ax_rs.set_title("Task 3.2 – Randles–Sevcik (peak current vs $\\sqrt{v}$)")
-            ax_rs.legend(fontsize=8)
+            ax_rs.legend(title="Peaks and fits", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
             beautify_axes(ax_rs)
             safe_save(fig_rs, "T3.2_CV_RandlesSevcik.png")
         else:
@@ -471,9 +475,6 @@ def analyze_task32_cp() -> None:
             continue
         t_s = pd.to_numeric(df[t_col], errors="coerce").to_numpy()
         e_v = pd.to_numeric(df[e_col], errors="coerce").to_numpy()
-        label = label_from_filename(path)
-        ax.plot(t_s, e_v, lw=1.0, label=label)
-
         tau = _estimate_tau_s(t_s, e_v)
         # Quarter-wave potential by interpolation at t = tau/4
         t_target = tau / 4.0
@@ -485,6 +486,18 @@ def analyze_task32_cp() -> None:
         else:
             i_mA = np.nan
 
+        # Legend label using applied current, prefer µA when small
+        file_label = label_from_filename(path)
+        if np.isfinite(i_mA):
+            if abs(i_mA) < 1.0:
+                legend_label = f"I≈{i_mA*1000:.0f} µA"
+            else:
+                legend_label = f"I≈{i_mA:.2f} mA"
+        else:
+            legend_label = file_label
+
+        ax.plot(t_s, e_v, lw=1.0, label=legend_label)
+
         # Sand's equation in the numeric form given in skript.md Eq. [1.1.5]
         # i[mA] * sqrt(tau[s]) / C*[mM] = 85.5 * n * A[cm^2] * sqrt(D[cm^2/s])
         # -> sqrt(D) = (i * sqrt(tau) / (85.5 * n * A * C*))
@@ -495,12 +508,12 @@ def analyze_task32_cp() -> None:
             D_sand = np.nan
         _add_D(D_sand, "Sand")
 
-        results.append(CPResult(label=label, current_mA=i_mA, tau_s=tau, E_tau_over_4_V=E_tau4, D_Sand_cm2_s=D_sand))
+        results.append(CPResult(label=file_label, current_mA=i_mA, tau_s=tau, E_tau_over_4_V=E_tau4, D_Sand_cm2_s=D_sand))
 
     ax.set_xlabel("t (s)")
     ax.set_ylabel("E (V vs Ag/AgCl)")
     ax.set_title("Task 3.2 – Chronopotentiometry (E vs t)")
-    ax.legend(fontsize=8, ncol=2)
+    ax.legend(title="Applied current", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     safe_save(fig, "T3.2_CP_transients.png")
 
@@ -634,7 +647,7 @@ def analyze_task32_eis() -> None:
     ax.set_xlabel(r"Z' (Ω·cm$^2$)")
     ax.set_ylabel(r"-Z'' (Ω·cm$^2$)")
     ax.set_title("Task 3.2 – EIS Nyquist (area-normalized)")
-    ax.legend(fontsize=8)
+    ax.legend(title="Dataset", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     ax.set_aspect("equal", adjustable="box")
     safe_save(fig, "T3.2_EIS_Nyquist.png")
@@ -662,7 +675,7 @@ def analyze_task32_eis() -> None:
     axw.set_xlabel(r"$1/\sqrt{\omega}$ (s$^{1/2}$)")
     axw.set_ylabel(r"Z (Ω·cm$^2$)")
     axw.set_title("Task 3.2 – Warburg linearization")
-    axw.legend(fontsize=8, ncol=2)
+    axw.legend(title="Components", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8, ncol=1)
     beautify_axes(axw)
     safe_save(figw, "T3.2_EIS_Warburg_linearization.png")
 
@@ -756,7 +769,7 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.set_xlabel("E (V vs Ag/AgCl)")
         ax.set_ylabel("j (mA cm$^{-2}$)")
         ax.set_title("Task 3.3 – LSVs at various rotation rates")
-        ax.legend(fontsize=8, ncol=2)
+        ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         safe_save(fig, "T3.3_LSV_overlay.png")
     else:
@@ -890,7 +903,7 @@ def analyze_task33_lsv_and_eis() -> None:
                         axtf.set_ylabel(r"$\eta$ (V)")
                         axtf.set_title("Task 3.3 – Tafel from kinetic currents")
                         beautify_axes(axtf)
-                        axtf.legend(fontsize=8)
+                        axtf.legend(title="Data and fit", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
                         safe_save(figtf, "T3.3_Tafel.png")
 
                         write_csv(pd.DataFrame({
@@ -963,7 +976,7 @@ def analyze_task33_lsv_and_eis() -> None:
         ax.set_xlabel(r"Z' (Ω·cm$^2$)")
         ax.set_ylabel(r"-Z'' (Ω·cm$^2$)")
         ax.set_title("Task 3.3 – PEIS Nyquist (area-normalized)")
-        ax.legend(fontsize=8)
+        ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         ax.set_aspect("equal", adjustable="box")
         safe_save(fig, "T3.3_EIS_Nyquist.png")
