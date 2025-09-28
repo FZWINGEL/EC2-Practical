@@ -40,6 +40,7 @@ plt.rcParams["axes.grid"] = True
 plt.rcParams["grid.alpha"] = 0.25
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["axes.spines.right"] = False
+plt.rcParams["svg.fonttype"] = "none"  # keep text as text in SVG
 
 
 # -----------------------------
@@ -49,6 +50,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 FIG_DIR = ROOT / "figures"
 RES_DIR = ROOT / "results"
+PLOT_EXT = ".svg"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 RES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -316,15 +318,46 @@ def identify_cc_segments(df: pd.DataFrame, i_threshold_a: float = 1e-4) -> pd.Da
 
 def integrate_capacity_per_segment(df: pd.DataFrame) -> pd.DataFrame:
     """
-    For each constant-sign segment, integrate current over time to get capacity (mAh).
-    Also compute per-segment normalized capacity (mAh/g) once mass is provided later.
+    Compute per-segment capacity (mAh) for constant-sign current segments.
+
+    Preference order for capacity source:
+      1) Use instrument-measured charge columns if available
+         - discharge: 'discharge_capacity_mAh_raw'
+         - charge:    'charge_capacity_mAh_raw'
+         - fallback:  'capacity_mAh_raw'
+      2) Otherwise, numerically integrate current over time: Q = ∫ I dt
+
+    The returned 'cap_mAh_seg' is zeroed at the start of each segment.
     """
     out = df.copy()
     out["cap_mAh_seg"] = np.nan
 
+    has_qchg = "charge_capacity_mAh_raw" in out.columns and out["charge_capacity_mAh_raw"].notna().any()
+    has_qdch = "discharge_capacity_mAh_raw" in out.columns and out["discharge_capacity_mAh_raw"].notna().any()
+    has_qtot = "capacity_mAh_raw" in out.columns and out["capacity_mAh_raw"].notna().any()
+
     for sid, g in out.groupby("seg_id", sort=True):
-        dq_mAh = np.cumsum(g["current_a"].values * g["dt_s"].values) / 3600.0 * 1000.0
-        out.loc[g.index, "cap_mAh_seg"] = dq_mAh - (dq_mAh[0] if len(dq_mAh) else 0.0)
+        if len(g) == 0:
+            continue
+        is_dis = bool(g["is_discharge"].iloc[0])
+
+        series = None
+        if is_dis and has_qdch:
+            series = g["discharge_capacity_mAh_raw"].astype(float).values
+        elif (not is_dis) and has_qchg:
+            series = g["charge_capacity_mAh_raw"].astype(float).values
+        elif has_qtot:
+            series = g["capacity_mAh_raw"].astype(float).values
+
+        if series is not None and np.isfinite(series).any():
+            # Use measured charge; reset to segment start
+            dq = series - (series[0] if len(series) else 0.0)
+        else:
+            # Fallback: integrate current
+            dq = np.cumsum(g["current_a"].values * g["dt_s"].values) / 3600.0 * 1000.0
+            dq = dq - (dq[0] if len(dq) else 0.0)
+
+        out.loc[g.index, "cap_mAh_seg"] = dq
 
     return out
 
@@ -722,20 +755,20 @@ def process_file(csv_path: Path, ce_records: List[Dict]) -> None:
 
     # Plots
     # 0) Voltage vs time (diagnostic)
-    vt_path = FIG_DIR / f"T3.1_V_vs_t_{csv_path.stem}.png"
+    vt_path = FIG_DIR / f"T3.1_V_vs_t_{csv_path.stem}{PLOT_EXT}"
     plot_voltage_over_time(sample_id, df, vt_path)
 
     # 1) CV overlay (first three cycles if detectable)
     cv_cycles = try_extract_cv_cycles(df, max_cycles=3)
-    cv_path = FIG_DIR / f"T3.1_CV_overlay_{csv_path.stem}.png"
+    cv_path = FIG_DIR / f"T3.1_CV_overlay_{csv_path.stem}{PLOT_EXT}"
     plot_cv_overlay(sample_id, cv_cycles, cv_path)
 
     # 2) Potential vs Capacity (overlay cycles and regimes)
-    pvc_path = FIG_DIR / f"T3.1_Potential_vs_Capacity_{csv_path.stem}.png"
+    pvc_path = FIG_DIR / f"T3.1_Potential_vs_Capacity_{csv_path.stem}{PLOT_EXT}"
     plot_potential_vs_capacity(sample_id, df, mass_g, pvc_path)
 
     # 3) dQ/dE (cathodic only)
-    dqdE_path = FIG_DIR / f"T3.1_dQdE_{csv_path.stem}.png"
+    dqdE_path = FIG_DIR / f"T3.1_dQdE_{csv_path.stem}{PLOT_EXT}"
     plot_dqdE_cathodic(sample_id, df, mass_g, dqdE_path)
 
 
