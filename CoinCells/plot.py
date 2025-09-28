@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 try:
     from scipy.signal import savgol_filter
@@ -36,6 +37,9 @@ MASS_MG: Dict[str, float] = {
 # Plot styling
 plt.rcParams["figure.dpi"] = 120
 plt.rcParams["axes.grid"] = True
+plt.rcParams["grid.alpha"] = 0.25
+plt.rcParams["axes.spines.top"] = False
+plt.rcParams["axes.spines.right"] = False
 
 
 # -----------------------------
@@ -389,8 +393,9 @@ def compute_ce_per_cycle(df: pd.DataFrame, mass_g: float) -> pd.DataFrame:
             continue
         Qc_mAh = Qc_vals.sum()
         Qd_mAh = Qd_vals.sum()
-        Qc_mAh_g = Qc_mAh / mass_g * 1000.0
-        Qd_mAh_g = Qd_mAh / mass_g * 1000.0
+        # Normalize to mAh/g (capacity already in mAh). Do not scale by 1000 again.
+        Qc_mAh_g = Qc_mAh / mass_g
+        Qd_mAh_g = Qd_mAh / mass_g
         CE = (Qd_mAh / Qc_mAh * 100.0) if Qc_mAh > 0 else np.nan
         I_mean = g["mean_I_A"].abs().mean()
         c_rate = estimate_c_rate(I_mean, mass_g, THEORETICAL_CAPACITY_MAH_G)
@@ -500,42 +505,97 @@ def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, 
     Overlay charge/discharge segments across cycles in one plot: E vs Q (mAh/g).
     """
     fig, ax = plt.subplots(figsize=(6, 4))
-    colors = plt.cm.tab20.colors
+    colors = plt.cm.tab10.colors
 
     # Ensure normalized capacity per segment exists
     df = df.copy()
-    df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g * 1000.0
+    # Convert integrated capacity (mAh) to specific capacity (mAh/g)
+    df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g
 
     labels_done: set = set()
+    labelled_cycles: set = set()
+
+    # Choose a compact set of cycles to show in the legend (max 8)
+    cycles_present = sorted([int(c) for c in df["cycle_est"].dropna().unique() if int(c) > 0])
+    if cycles_present:
+        num_to_label = min(8, len(cycles_present))
+        # Evenly spaced selection including first and last
+        sel_idx = np.unique(np.linspace(0, len(cycles_present) - 1, num=num_to_label, dtype=int))
+        selected_cycles = {cycles_present[i] for i in sel_idx}
+    else:
+        selected_cycles = set()
     for cyc, gcyc in df.groupby("cycle_est", sort=True):
         if cyc == 0:
             continue
-        for is_dis, gseg in gcyc.groupby("seg_id", sort=True):
-            seg = df.loc[df["seg_id"] == is_dis].iloc[0] if len(df.loc[df["seg_id"] == is_dis]) else None
+        color = colors[(cyc - 1) % len(colors)]
         # plot each segment in this cycle
         for sid, gseg in gcyc.groupby("seg_id", sort=True):
             if gseg["cap_mAh_g_seg"].abs().max() < 1e-6:
                 continue
             is_discharge = bool(gseg["is_discharge"].iloc[0])
-            lbl = f"Discharge (Cycle {cyc})" if is_discharge else f"Charge (Cycle {cyc})"
-            if lbl in labels_done:
+            # Label only once per cycle (use discharge as representative)
+            if is_discharge and cyc in selected_cycles and cyc not in labelled_cycles:
+                lbl = f"Cycle {cyc}"
+                labelled_cycles.add(cyc)
+            else:
                 lbl = None
             ax.plot(
                 gseg["cap_mAh_g_seg"].abs().values,
                 gseg["voltage_v"].values,
-                color=colors[(cyc - 1) % len(colors)],
-                lw=1.2,
-                alpha=0.9,
-                label=lbl
+                color=color,
+                lw=1.4 if is_discharge else 1.2,
+                ls="-" if is_discharge else "--",
+                alpha=0.95 if is_discharge else 0.6,
+                label=lbl,
             )
             labels_done.add(lbl or f"{sid}-{cyc}")
+
+    # Y-axis: exactly min..max of plotted data (no extra margins)
+    try:
+        mask_plot = (
+            (df["cycle_est"] > 0)
+            & df["cap_mAh_g_seg"].abs().gt(1e-6)
+            & df["voltage_v"].notna()
+        )
+        y_min = float(df.loc[mask_plot, "voltage_v"].min()) - 0.1
+        y_max = float(df.loc[mask_plot, "voltage_v"].max()) + 0.1
+        if np.isfinite(y_min) and np.isfinite(y_max) and y_max > y_min:
+            ax.set_ylim(y_min, y_max)
+            ax.margins(y=0)
+    except Exception:
+        pass
 
     ax.set_xlabel("Capacity (mAh/g)")
     ax.set_ylabel("Potential (V)")
     ax.set_title(f"Potential vs Capacity - {sample_id}")
-    #ax.legend(ncols=2, fontsize=8, loc="best")
+    # Nice x-limits
+    try:
+        qmax = float(np.nanmax(np.abs(df["cap_mAh_g_seg"].values)))
+        ax.set_xlim(0, min(max(200.0, qmax * 1.05), 380.0))
+    except Exception:
+        pass
+
+    # Legend outside (right): cycles + style key
+    handles, labels = ax.get_legend_handles_labels()
+    style_handles = [
+        Line2D([0], [0], color="0.2", lw=1.6, ls="-", label="Discharge"),
+        Line2D([0], [0], color="0.2", lw=1.2, ls="--", label="Charge"),
+    ]
+    handles_all = handles + style_handles
+    labels_all = labels + [h.get_label() for h in style_handles]
+    if handles_all:
+        ax.legend(
+            handles_all,
+            labels_all,
+            title="Cycles",
+            fontsize=8,
+            loc="upper left",
+            bbox_to_anchor=(1.02, 1.0),
+            borderaxespad=0.0,
+            framealpha=0.95,
+        )
     fig.tight_layout()
-    fig.savefig(outpath)
+    fig.savefig(outpath, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -549,7 +609,8 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
 
     # Normalized capacity within segment
     df = df.copy()
-    df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g * 1000.0
+    # Specific capacity in mAh/g for discharge segments
+    df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g
 
     for cyc, gcyc in df.groupby("cycle_est", sort=True):
         if cyc == 0:
