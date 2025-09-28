@@ -533,7 +533,7 @@ def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, 
     ax.set_xlabel("Capacity (mAh/g)")
     ax.set_ylabel("Potential (V)")
     ax.set_title(f"Potential vs Capacity - {sample_id}")
-    ax.legend(ncols=2, fontsize=8, loc="best")
+    #ax.legend(ncols=2, fontsize=8, loc="best")
     fig.tight_layout()
     fig.savefig(outpath)
     plt.close(fig)
@@ -561,18 +561,42 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
             Q = gseg["cap_mAh_g_seg"].abs().values
             if len(E) < 5:
                 continue
-            # Smooth E and Q slightly for robust derivative
-            Es = smooth(E, window=11)
-            Qs = smooth(Q, window=11)
-            dQ_dE = np.gradient(Qs, Es)
+            # Smooth E and Q with Savitzky–Golay (fallback if SciPy unavailable)
+            if HAS_SCIPY:
+                n_pts = len(E)
+                win = min(11100, n_pts if n_pts % 2 == 1 else n_pts - 1)
+                if win >= 5:
+                    poly = 3 if win > 5 else 2
+                    Es = savgol_filter(E, window_length=win, polyorder=min(poly, win - 1), mode="interp")
+                    Qs = savgol_filter(Q, window_length=win, polyorder=min(poly, win - 1), mode="interp")
+                else:
+                    Es = smooth(E, window=7)
+                    Qs = smooth(Q, window=7)
+            else:
+                Es = smooth(E, window=11)
+                Qs = smooth(Q, window=11)
+            # Compute derivative dQ/dE with guards against tiny dE and spikes
+            with np.errstate(divide='ignore', invalid='ignore'):
+                dQ_dE = np.gradient(Qs, Es)
+            dE_local = np.gradient(Es)
+            tiny = max(1e-6, np.nanmedian(np.abs(dE_local)) * 0.01)
+            # Mask regions where voltage spacing is too small (unstable derivative)
+            dQ_dE = np.where(np.abs(dE_local) < tiny, np.nan, dQ_dE)
+            # Clip extreme outliers robustly
+            finite_mask = np.isfinite(dQ_dE)
+            if finite_mask.sum() > 20:
+                lo, hi = np.nanpercentile(dQ_dE[finite_mask], [1.0, 99.0])
+                dQ_dE = np.clip(dQ_dE, lo, hi)
+            # Lightly smooth the derivative to suppress residual spikes
+            dQ_dE = smooth(dQ_dE, window=min(101, max(7, (len(dQ_dE)//50)*2 + 1)))
             ax.plot(Es, dQ_dE, lw=1.4, color=colors[color_idx % 10], label=f"Cycle {cyc}")
             color_idx += 1
 
     ax.set_xlabel("E (V)")
     ax.set_ylabel("dQ/dE (mAh g^-1 V^-1)")
     ax.set_title(f"dQ/dE (cathodic) - {sample_id}")
-    if color_idx > 0:
-        ax.legend(fontsize=8)
+    #if color_idx > 0:
+    #ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(outpath)
     plt.close(fig)

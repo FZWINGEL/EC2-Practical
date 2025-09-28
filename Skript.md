@@ -52,7 +52,7 @@ $$
 
 ---
 
-An advantage of the controlled-current method is the possibility of calculating differential capacity plots (also known as incremental capacity plots). These plots are the derivative of the charge-discharge curves with respect to the potential (dQ/dE, Equation 1.1.3). These plots can provide information about the multiple redox processes, phase transitions and cell degradation processes during battery cycling.<sup>11-13</sup>
+An advantage of the controlled-current method is the possibility of calculating differential capacity plots (also known as incremental capacity plots). These plots are the derivative of the charge-discharge curves with respect to the potential (dQ/dE, Equation 1.1.3). These plots can provide information about the multiple redox processes, phase transitions and cell degradation processes during battery cycling.`<sup>`11-13`</sup>`
 
 $$
 \frac{dQ}{dE} \approx \frac{Q_{k+1} - Q_k}{E_{k+1} - E_k} \qquad [1.1.3]
@@ -104,7 +104,7 @@ $$
 \omega = 2 \cdot \pi \cdot f
 $$
 
-Here, *j(t)* is the current at a specific time (*t*), *j*<sub>max</sub> is the amplitude of the current signal and likewise, *E*<sub>max</sub> is the amplitude of the potential. Here, the variable *i* is the imaginary number (-1)<sup>1/2</sup> and *f* is the frequency in s<sup>-1</sup>. The variable *φ* is the phase shift (also known as the phase angle) between the potential and the current signals. During a typical EIS experiment, amplitudes *E*<sub>max</sub> and *j*<sub>max</sub>, as well as *φ*, are measured at different applied frequencies.
+Here, *j(t)* is the current at a specific time (*t*), *j*`<sub>`max`</sub>` is the amplitude of the current signal and likewise, *E*`<sub>`max`</sub>` is the amplitude of the potential. Here, the variable *i* is the imaginary number (-1)`<sup>`1/2`</sup>` and *f* is the frequency in s`<sup>`-1`</sup>`. The variable *φ* is the phase shift (also known as the phase angle) between the potential and the current signals. During a typical EIS experiment, amplitudes *E*`<sub>`max`</sub>` and *j*`<sub>`max`</sub>`, as well as *φ*, are measured at different applied frequencies.
 
 ### A quick review on AC circuits
 
@@ -148,11 +148,11 @@ An electrochemical interface requires the combination of more than one circuit e
 
 **Table 1.** Commonly used electric elements (and their impedances) for electrochemical impedance spectroscopy analysis
 
-<table><thead><tr><td>Element</td><td>Symbol</td><td>Impedance</td></tr></thead><tbody><tr><td>Resistor</td><td>R</td><td>Z<sub>R</sub> = R</td></tr><tr><td>Capacitor</td><td>C</td><td>Z<sub>C</sub> = <sup>1</sup>&frasl;<sub>i&omega;C</sub></td></tr><tr><td>Inductor</td><td>L</td><td>Z<sub>L</sub> = i&omega;L</td></tr></tbody></table>
+<table><thead><tr><td>Element</td><td>Symbol</td><td>Impedance</td></tr></thead><tbody><tr><td>Resistor</td><td>R</td><td>Z<sub>R</sub> = R</td></tr><tr><td>Capacitor</td><td>C</td><td>Z<sub>C</sub> = <sup>1</sup>⁄<sub>iωC</sub></td></tr><tr><td>Inductor</td><td>L</td><td>Z<sub>L</sub> = iωL</td></tr></tbody></table>
 
 ---
 
-<table><tr><td>Warburg<br>Used to describe semi-infinite linear diffusion of electroactive species to an electrode</td><td>W</td><td>Z<sub>Warburg</sub> = <sup>A<sub>W</sub></sup>&frasl;<sub>&omega;<sup>1/2</sub></sub> - i <sup>A<sub>W</sub></sup>&frasl;<sub>&omega;<sup>1/2</sub></sub><br>A<sub>W</sub> = <sup>RT</sup>&frasl;<sub>n<sup>2</sup>F<sup>2</sup>A&radic;2</sub> &nbsp; ( <sup>1</sup>&frasl;<sub>c<sub>ox</sub>D<sub>ox</sub><sup>2</sup></sub> + <sup>1</sup>&frasl;<sub>c<sub>red</sub>D<sub>red</sub><sup>2</sup></sub> )<br>R: gas constant, T: temperature, n: number of transferred electrons, A: electrode area, ci: concentration of electroactive species i at surface of the electrode, Di: diffusion coefficient of electroactive species i.</td></tr><tr><td>Constant-phase element (CPE)<br>Often used to describe non-ideal capacitive behavior</td><td>P</td><td>Z<sub>P</sub> = <sup>1</sup>&frasl;<sub>Q(i&omega;)<sup>a</sup></sub><br>Q: admittance, a: ideality factor (ranges from 0 to 1)</td></tr><tr><td colspan="2">Reminder:<br>Z<sub>Series</sub> = Z<sub>1</sub> + Z<sub>2</sub> + Z<sub>3</sub>... and<br>Z<sub>Parallel</sub> = [<sup>1</sup>&frasl;<sub>Z<sub>1</sub></sub> + <sup>1</sup>&frasl;<sub>Z<sub>2</sub></sub> + <sup>1</sup>&frasl;<sub>Z<sub>3</sub></sub> + ...]<sup>-1</sup><br>(1, 2, 3 ... stand for different circuit elements)</td><td></td></tr></table>
+<table><tr><td>Warburg<br>Used to describe semi-infinite linear diffusion of electroactive species to an electrode</td><td>W</td><td>Z<sub>Warburg</sub> = <sup>A<sub>W</sub></sup>⁄<sub>ω<sup>1/2</sub></sub> - i <sup>A<sub>W</sub></sup>⁄<sub>ω<sup>1/2</sub></sub><br>A<sub>W</sub> = <sup>RT</sup>⁄<sub>n<sup>2</sup>F<sup>2</sup>A√2</sub>   ( <sup>1</sup>⁄<sub>c<sub>ox</sub>D<sub>ox</sub><sup>2</sup></sub> + <sup>1</sup>⁄<sub>c<sub>red</sub>D<sub>red</sub><sup>2</sup></sub> )<br>R: gas constant, T: temperature, n: number of transferred electrons, A: electrode area, ci: concentration of electroactive species i at surface of the electrode, Di: diffusion coefficient of electroactive species i.</td></tr><tr><td>Constant-phase element (CPE)<br>Often used to describe non-ideal capacitive behavior</td><td>P</td><td>Z<sub>P</sub> = <sup>1</sup>⁄<sub>Q(iω)<sup>a</sup></sub><br>Q: admittance, a: ideality factor (ranges from 0 to 1)</td></tr><tr><td colspan="2">Reminder:<br>Z<sub>Series</sub> = Z<sub>1</sub> + Z<sub>2</sub> + Z<sub>3</sub>... and<br>Z<sub>Parallel</sub> = [<sup>1</sup>⁄<sub>Z<sub>1</sub></sub> + <sup>1</sup>⁄<sub>Z<sub>2</sub></sub> + <sup>1</sup>⁄<sub>Z<sub>3</sub></sub> + ...]<sup>-1</sup><br>(1, 2, 3 ... stand for different circuit elements)</td><td></td></tr></table>
 
 **How do electrochemical processes relate to electrical circuit elements and how to choose (or build) the appropriate equivalent circuit?**
 
@@ -180,7 +180,7 @@ One of the most common ways to present EIS data is in a *Nyquist plot* (–$Z_{\
 
 **Figure 1.2.5** Nyquist plots for simple RC circuits connected in series (left) and in parallel (right); R₁ = 50 Ω and C₁ = 1 μF. The arrow indicates the direction in which the frequency is increasing.
 
-The spectra shown in Figure 1.2.5 are not only significantly different in shape, but also in the magnitude of the impedance in Z<sub>Im</sub>, even though the values of R<sub>1</sub> and C<sub>1</sub> are exactly the same. Note, however, that the resistance can be obtained directly from the x-axis on both plots and it is exactly 50 Ω. The difference between the spectra can be easily identified when we calculate the total impedance of each circuit independently:
+The spectra shown in Figure 1.2.5 are not only significantly different in shape, but also in the magnitude of the impedance in Z`<sub>`Im`</sub>`, even though the values of R`<sub>`1`</sub>` and C`<sub>`1`</sub>` are exactly the same. Note, however, that the resistance can be obtained directly from the x-axis on both plots and it is exactly 50 Ω. The difference between the spectra can be easily identified when we calculate the total impedance of each circuit independently:
 
 For the RC-series circuit, based on the basics of electrical circuits, the impedance of each element is simply added:
 
@@ -198,7 +198,7 @@ $$
 Z_{\text{Series}} = R_1 - i \frac{1}{\omega C_1} \qquad [1.2.9]
 $$
 
-Now, it is evident that the frequency-dependence lies only on the capacitive element and that at low frequencies the imaginary impedance Z<sub>Im</sub> approaches infinity. (Hence the observed straight line with an intercept at 50 Ω at Z<sub>Re</sub> in the Nyquist plot).
+Now, it is evident that the frequency-dependence lies only on the capacitive element and that at low frequencies the imaginary impedance Z`<sub>`Im`</sub>` approaches infinity. (Hence the observed straight line with an intercept at 50 Ω at Z`<sub>`Re`</sub>` in the Nyquist plot).
 
 In the case of the RC-parallel circuit,
 
@@ -223,7 +223,6 @@ $$
 $$
 
 The impedance spectra presented so far are the simplest of equivalent electrical circuits. The complexity of measured impedance spectra, as well as its analysis, often requires the use of sophisticated software for correct interpretation based on regression analysis of the fits of the equivalent electrical circuit used and the measured data. Moreover, it is possible that different equivalent electrical circuits show the same impedance response. The circuits shown in Fig 1.2.6, although developed from different physical models, exhibit mathematically equivalent frequency responses because they share time constants of the same magnitude.
-
 
 **Figure 1.2.6** Two mathematically equivalent electrical circuits and their impedance responses. $R_1 = 25 \ \Omega$, $R_2 = 50 \ \Omega$, $R_3 = 100 \ \Omega$, $C_1 = 1 \ \mu F$, $C_2 = 1 \ mF$
 
@@ -288,9 +287,7 @@ For your electrochemical experiments, you will be using a glassy carbon (GC) wor
 The composition of this electrolyte is simply a 2 M potassium chloride with 2.3 mM of $K_3Fe(CN)_6$ in nanopure water.
 
 1. Measure cyclic voltammograms in the potential range of +0.9 V to -0.1 V vs. Ag/AgCl at different scan rates (500, 200, 100, 50, 25, 10 mV/s) → [3 cycles at each scan rate]
-
 2. Measure a single impedance spectrum at the formal potential (equilibrate for 30 s) of the $[Fe(CN)_6]^{3-/4-}$ redox couple in the frequency range of 0.1 MHz to 500 mHz and with a potential amplitude of 10 mV.
-
 3. Measure how the potential changes as a function of time at the following applied currents: -1 µA, -10 µA and -20 µA.
 
 #### 2.2.2 Rotating Electrode|Inert electrolyte + Electroactive species in solution (Interface No. 2)
@@ -298,12 +295,7 @@ The composition of this electrolyte is simply a 2 M potassium chloride with 2.3 
 The composition of this electrolyte is also 2 M potassium chloride with 2.3 mM of $K_3Fe(CN)_6$ in nanopure water.
 
 1. Measure linear sweep voltammograms in the potential range of +0.9 V to -0.1 V vs. Ag/AgCl at a scan rate of 50 mV/s as a function of electrode rotation rate (250, 500, 1000, 1500, 2000, 2500 rpm)
-
-2. Measure a single impedance spectra at the formal potential (equilibrate for 30 s) of the $[Fe(CN)_6]^{3-/4-}$ redox couple in the frequency range of 0.1 MHz to 50 mHz and with a
-
----
-
-potential amplitude of 10 mV at each rotation rate.
+2. Measure a single impedance spectra at the formal potential (equilibrate for 30 s) of the $[Fe(CN)_6]^{3-/4-}$ redox couple in the frequency range of 0.1 MHz to 50 mHz and with a potential amplitude of 10 mV at each rotation rate.
 
 # 3. Tasks and Analysis
 
@@ -312,19 +304,14 @@ potential amplitude of 10 mV at each rotation rate.
 ### 1. Cyclic voltammogram
 
 * Plot all three cycles overlaid in the same graph
-
 * Describe the obtained curves and important points like oxidation, reduction and formal potential. Do you observe any differences? What are the possible causes for these changes in the voltammograms? Do you observe any peaks? If so, what electrochemical process(es) could these peaks be related to?
 
 ### 2. Galvanostatic charge-discharge cycles
 
 * Plot all the cycles at different C-rates in a single graph of Potential vs. Capacity (mAh/g): (Use the material's specifications to correctly normalize your data)
-
 * Describe the graph. Indicate the charging and discharging regimes. Comment on the chosen voltage window, does it allow to use NMCs full capacity? How does the experimental capacity compare to the theoretical capacity of the graphite material? Does the capacity depend on the C-rate?
-
 * Calculate the Coulombic efficiency (CE) of your battery at all C-rates
-
 * Does the CE depend on the C-rate?
-
 * Generate the derivative plots ($dQ/dE$ vs. $E$) of all cycles and discuss your results. Try to match the charging and discharging processes to an electrochemical process, e.g. extraction of $Li^+$ from NMC. Pay attention that you only monitor cathodic processes.
 
 ## 3.2 Diffusion limited electron-transfer – The Randles Circuit (Interface No. 1)
@@ -332,31 +319,22 @@ potential amplitude of 10 mV at each rotation rate.
 ### 1. Cyclic voltammograms (CVs)
 
 * Plot the CVs [only the last cycle at each scan rate] superimposed in a single graph. (Make sure you normalize the measured current by the area of the electrode)
-
 * Describe the plot: what trends do you observe?
-
 * Is the redox couple a reversible? How did you determine this?
-
 * Identify the potentials where the current reaches a maximum (both in the anodic and the cathodic regime) as a function of scan rate.
-
 * Does the peak potential depend on the scan rate? If so, give possible explanations.
-
 * Plot the peak currents (both anodic and cathodic) as a function of the square-root of the scan rate ($i_{peak} \text{ vs. } v^{1/2}$) → [Produce a Randles-Sevcik plot]
-
 * Using the slope of the Randles-Sevcik plots, determine the diffusion coefficient of the redox species.
 
 ### 2. Impedance Spectra
 
 * Plot your collected impedance spectra in a Nyquist plot that is normalized to the area of the electrode.
-
 * Determine the electrolyte resistance, the charge-transfer resistance and the double-layer capacitance.
-
 * From the value of the charge-transfer resistance, estimate the $k^0$ value of the redox couple. → How does this value compare to literature values?
 
 ---
 
 * Using the data points from the “Warburg tail”, plot both the real and imaginary impedances as a function of $\omega^{1/2}$ and curves use the slope of the curves (which is $A_W$) to determine the diffusion coefficient of the redox species'.
-
 * To determine the diffusion coefficient, use the approximate equation below
 
 $$
@@ -368,11 +346,8 @@ $$
 ### 3. Constant-current (Galvanostatic) chronopotentiometry
 
 * Plot all potential transients in a single plot.
-
 * Describe the plot: what trends, if any, do you observe?
-
 * Determine the transition time ($\tau$) of all the transients and from them the quarter-wave potential.
-
 * Using Sand's equation, determine the diffusion coefficient of the ferricyanide.
 
 ## 3.3 Diffusion limited electron-transfer with fixed-length diffusion layer (Interface No. 2)
@@ -380,19 +355,14 @@ $$
 ### 1. Linear sweep voltammograms (LSVs)
 
 * Plot all LSVs superimposed in a single graph.
-
 * Describe the plot: what trends do you observe?
-
 * Perform a Koutecky-Levich analysis using the rotation rate-dependent currents at various potentials and determine the kinetic current of this redox couple at those potentials.
-
 * From the obtained kinetic currents, generate a Tafel plot to extract the exchange current density ($j_0$) for this redox couple.
 
 ### 2. Impedance Spectra
 
 * Plot all spectra superimposed in a single graph.
-
 * Describe the plot: what trends do you observe?
-
 * By doing a qualitative analysis of the spectra, report the charge-transfer resistance, the double-layer capacitance and the diffusion layer thickness at each rotation rate.
 
 ### 4. Discussion and Summary/Conclusions
@@ -406,21 +376,13 @@ Use this section to summarize your results from all the measurements performed. 
 the overall coulombic efficiency and stability of the material.
 
 * **For Interface No. 1:**
-
 * Were you able to determine the diffusion coefficient of the redox couple?
-
 * How does the value from the CV data compares to the one obtained from the Warburg coefficient to the one obtained from Sand's equation?
-
 * How do these compare to literature values?
-
 * From your charge-transfer resistance value, extract the apparent exchange rate constant ($k^0$) of the redox couple. How does this value compare to those reported in the literature? For deviations from literature values, provide possible explanations.
-
 * Discuss if the measured system is reversible, quasireversible or irreversible.
-
 * **For Interface No. 2:**
-
 * Were you able to determine the diffusion coefficient and $k^0$ of the redox couple?
-
 * How does these values compare to those you obtained for Interface No. 1?
 
 **References**
@@ -451,7 +413,6 @@ Sections from the text below have been adapted from: Scientific Papers. In *The 
 In general, scientific papers are organized into a standard format that includes (but is not limited to): abstract, introduction, experimental details or theoretical basis, results, discussions and conclusions. This document will briefly describe what is included, as well as suggestions on writing styles and word usage in each section.
 
 1. **Abstract:** Most scientific publications require an informative summary (abstract) that contain between 80 and 250 words in total. Avoid acronyms and abbreviations, but if needed define at first use within the abstract and at first use within the text. It is recommended to write the abstract last (once the full article is written) so that it fully portrays the contents of the manuscript. Moreover, the **verb tenses used per sentence depend on which section of the manuscript it refers to**
-
 2. **Introduction:** This section should start with presenting broad statements regarding the scientific problem and the research motivation. Related and relevant previous work should be presented, accurately cited and discussed within the context of the current project. It is important to highlight how the current work is different and contributes new insights from the previous work. Note that the verb tenses used in this section depend on the type of sentence:
 
 a. When stating a widely accepted fact, the **present tense** is appropriate:
@@ -473,7 +434,6 @@ d. When referring specifically to previously published methodology, the **past t
 i. Li and coworkers **used** photovoltage decay measurements and **distinguished** various simultaneous interfacial phenomena.
 
 3. **Experimental Details and/or Theoretical Basis** (also known as "*Experimental Methods*", "*Methodology*", "*Materials and Methods*") : This section should provide all the details necessary so that another experienced scientist may repeat the work and obtain similar results. Identify the materials used with correct chemical formulas, chemical names and provide information on purity. A description of non-standard and/or home-built apparatus should be provided. If standard equipment is used, provide the company name and model number in parenthesis. Describe all procedures used, unless standard. In the case of the latter, provide appropriate citations. Note and emphasize any hazards during the procedures, e.g. explosive, pyrophoric, toxicity properties. This section should be **written entirely in past tense** because it reports what has been done during the course of the study.
-
 4. **Results:** Show and summarize all collected data and statistical treatment applied. Use equations, figures and tables when necessary for clarity and brevity. Include only
 
 ---
