@@ -1,0 +1,5 @@
+metric,interface,method,value,units
+D,1,I1_RS/EIS,2.503430897705447e-06,cm^2/s
+D,2,I2_KL,2.503430897705447e-06,cm^2/s
+k0,1,I1_PEIS,0.000721322185054,cm/s
+k0,2,I2_PEIS,0.0006337594185569,cm/s

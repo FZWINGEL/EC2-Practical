@@ -7,8 +7,17 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from .config import DATA_DIR, GC_AREA_CM2, NU_CMS2, N_ELECTRONS
-from .diffusion import get_calculated_diffusion
+from .config import (
+    DATA_DIR,
+    GC_AREA_CM2,
+    NU_CMS2,
+    N_ELECTRONS,
+    R_GAS,
+    F_CONST,
+    T_K,
+    C_BULK_MOL_PER_CM3,
+)
+from .diffusion import get_calculated_diffusion, add_diffusion_coefficient
 from .io_utils import read_biologic_table, write_csv
 from .pipeline import TaskReport
 from .plotting import beautify_axes, safe_save
@@ -124,6 +133,7 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             E_targets = np.linspace(E_grid.min() + 0.05 * np.ptp(E_grid), E_grid.max() - 0.05 * np.ptp(E_grid), 8)
             kl_rows: List[KLPoint] = []
             jk_vs_E: List[Tuple[float, float]] = []
+            kl_summ_rows: List[Dict[str, float]] = []
 
             for E0 in E_targets:
                 j_at_E = np.array([j_by_rpm[rpm][np.argmin(np.abs(E_grid - E0))] for rpm in rpms])
@@ -141,6 +151,23 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                 )
                 jk_vs_E.append((E0, jk))
 
+                # KL slope S = 1/B; B = 0.62 n F D^(2/3) nu^(-1/6) C*
+                # Work on current density, so area cancels
+                if np.isfinite(slope) and (slope > 0):
+                    B_val = 1.0 / float(slope)
+                    denom = 0.62 * N_ELECTRONS * F_CONST * C_BULK_MOL_PER_CM3
+                    if denom > 0 and (NU_CMS2 > 0):
+                        D_pow23 = (B_val * (NU_CMS2 ** (1.0 / 6.0))) / denom
+                        D_val = float(D_pow23 ** 1.5) if D_pow23 > 0 else float("nan")
+                    else:
+                        D_val = float("nan")
+                    kl_summ_rows.append({
+                        "E_V": float(E0),
+                        "slope_1_over_B": float(slope),
+                        "B_A_cm2_s05": float(B_val),
+                        "D_KL_cm2_s": float(D_val),
+                    })
+
             if jk_vs_E:
                 df_kl = pd.DataFrame([point.__dict__ for point in kl_rows])
                 report.record_table(write_csv(df_kl, "T3.3_KouteckyLevich_points.csv"))
@@ -149,6 +176,17 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                 df_jk = pd.DataFrame({"E_V": [p[0] for p in jk_vs_E], "j_k_A_cm2": [p[1] for p in jk_vs_E]}).sort_values("E_V")
                 report.record_table(write_csv(df_jk, "T3.3_jk_vs_E.csv"))
                 report.add_message(f"[KL] Derived {len(df_jk)} kinetic-current values.")
+
+                # Persist KL-derived diffusion coefficients per potential and summarize
+                if kl_summ_rows:
+                    df_klD = pd.DataFrame(kl_summ_rows).sort_values("E_V")
+                    report.record_table(write_csv(df_klD, "T3.3_KL_diffusion.csv"))
+                    D_vals = df_klD["D_KL_cm2_s"].to_numpy()
+                    D_vals = D_vals[np.isfinite(D_vals) & (D_vals > 0)]
+                    if D_vals.size:
+                        D_med = float(np.nanmedian(D_vals))
+                        add_diffusion_coefficient(D_med, "Koutecky-Levich (Task 3.3)")
+                        report.add_message(f"[KL] D_KL~{D_med:.2e} cm^2/s (median across E)")
 
                 mid = len(jk_vs_E) // 2
                 if mid < len(jk_vs_E):
@@ -251,6 +289,8 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                         axtf.legend(title="Data and fit", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
                         report.record_figure(safe_save(figtf, "T3.3_Tafel.png"))
 
+                        # Also estimate k0 from Tafel j0 if PEIS is not available later (fallback)
+                        k0_app = float(j0 / (N_ELECTRONS * F_CONST * C_BULK_MOL_PER_CM3)) if (N_ELECTRONS > 0 and F_CONST > 0 and C_BULK_MOL_PER_CM3 > 0) else float("nan")
                         report.record_table(
                             write_csv(
                                 pd.DataFrame(
@@ -259,6 +299,7 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                                         "intercept_V": [best["intercept"]],
                                         "E_eq_est_V": [E_eq],
                                         "j0_A_cm2": [float(j0)],
+                                        "k0_app_cm_s": [float(k0_app)],
                                         "R2": [best["r2"]],
                                         "branch_sign": [int(sign_to_use)],
                                         "eta_min_V": [best["eta_min"]],
@@ -357,6 +398,12 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             else:
                 delta_cm = float("nan")
 
+            # k0 from PEIS (primary): k0 = RT / (n^2 F^2 C* Rct)
+            if np.isfinite(Rct_area) and (Rct_area > 0) and (C_BULK_MOL_PER_CM3 > 0):
+                k0_cm_s = float((R_GAS * T_K) / ((N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * Rct_area))
+            else:
+                k0_cm_s = float("nan")
+
             peis_rows.append(
                 {
                     "label": label,
@@ -367,6 +414,7 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                     "f_peak_Hz": f_peak,
                     "delta_cm": delta_cm,
                     "D_used_cm2_s": D_calc if np.isfinite(D_calc) else float("nan"),
+                    "k0_cm_s": k0_cm_s,
                 }
             )
 
@@ -407,11 +455,65 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
         report.record_figure(safe_save(fig, "T3.3_EIS_Nyquist.png"))
 
         if peis_rows:
-            report.record_table(write_csv(pd.DataFrame(peis_rows), "T3.3_PEIS_summary.csv"))
+            df_peis = pd.DataFrame(peis_rows)
+            report.record_table(write_csv(df_peis, "T3.3_PEIS_summary.csv"))
             report.add_message(f"[PEIS] Processed {len(peis_rows)} PEIS spectra.")
+            if "k0_cm_s" in df_peis.columns and df_peis["k0_cm_s"].notna().any():
+                k0_med = float(np.nanmedian(df_peis["k0_cm_s"]))
+                report.add_message(f"[PEIS] k0~{k0_med:.2e} cm/s (median across rotations)")
     else:
         message = "[PEIS] No PEIS files found; skipping PEIS plot."
         print(message)
         report.add_message(message)
+
+    # --- Comparison vs Interface 1 (Task 3.2) ---
+    try:
+        # Interface 2 values from current run
+        D_I2 = get_calculated_diffusion()
+        k0_I2 = float("nan")
+        peis_summary_path = Path("results") / "T3.3_PEIS_summary.csv"
+        if peis_summary_path.exists():
+            df_peis2 = pd.read_csv(peis_summary_path)
+            if "k0_cm_s" in df_peis2.columns:
+                k0_I2 = float(np.nanmedian(pd.to_numeric(df_peis2["k0_cm_s"], errors="coerce")))
+
+        # Interface 1 values from saved results if available
+        D_I1 = float("nan")
+        k0_I1 = float("nan")
+        rs_path = Path("results") / "T3.2_CV_randles_sevcik.csv"
+        eis_path = Path("results") / "T3.2_EIS_summary.csv"
+        if rs_path.exists():
+            df_rs = pd.read_csv(rs_path)
+            if "D_RandlesSevcik_cm2_s" in df_rs.columns:
+                D_I1 = float(np.nanmedian(pd.to_numeric(df_rs["D_RandlesSevcik_cm2_s"], errors="coerce")))
+        if eis_path.exists():
+            df_e1 = pd.read_csv(eis_path)
+            # Prefer EIS Warburg D if present
+            if "D_Warburg_cm2_s" in df_e1.columns and pd.to_numeric(df_e1["D_Warburg_cm2_s"], errors="coerce").notna().any():
+                D_I1 = float(np.nanmedian(pd.to_numeric(df_e1["D_Warburg_cm2_s"], errors="coerce"))) if not np.isfinite(D_I1) else D_I1
+            if "k0_cm_s" in df_e1.columns:
+                k0_I1 = float(np.nanmedian(pd.to_numeric(df_e1["k0_cm_s"], errors="coerce")))
+
+        rows_compare: List[Dict[str, object]] = []
+        if np.isfinite(D_I1):
+            rows_compare.append({"metric": "D", "interface": 1, "method": "I1_RS/EIS", "value": D_I1, "units": "cm^2/s"})
+        if np.isfinite(D_I2):
+            rows_compare.append({"metric": "D", "interface": 2, "method": "I2_KL", "value": D_I2, "units": "cm^2/s"})
+        if np.isfinite(k0_I1):
+            rows_compare.append({"metric": "k0", "interface": 1, "method": "I1_PEIS", "value": k0_I1, "units": "cm/s"})
+        if np.isfinite(k0_I2):
+            rows_compare.append({"metric": "k0", "interface": 2, "method": "I2_PEIS", "value": k0_I2, "units": "cm/s"})
+
+        if rows_compare:
+            df_cmp = pd.DataFrame(rows_compare)
+            report.record_table(write_csv(df_cmp, "T3.3_compare_interface1_vs_interface2.csv"))
+            if np.isfinite(D_I1) and np.isfinite(D_I2) and (D_I1 > 0):
+                diffD = (D_I2 - D_I1) / D_I1 * 100.0
+                report.add_message(f"[Compare] D_I2 vs D_I1: {diffD:+.1f}%")
+            if np.isfinite(k0_I1) and np.isfinite(k0_I2) and (k0_I1 > 0):
+                diffk = (k0_I2 - k0_I1) / k0_I1 * 100.0
+                report.add_message(f"[Compare] k0_I2 vs k0_I1: {diffk:+.1f}%")
+    except Exception as exc:
+        report.add_warning(f"[Compare] Failed to generate comparison: {exc}")
 
     return report
