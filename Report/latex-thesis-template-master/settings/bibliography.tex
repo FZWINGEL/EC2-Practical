@@ -1,0 +1,25 @@
+\usepackage[
+    backend=biber,
+    style=chem-acs,
+    citestyle=numeric,
+    sorting=none,
+    articletitle=true,
+    giveninits=true,
+    maxnames=6,
+    maxbibnames=6
+]{biblatex}
+
+% Distance between bibliographical references
+\setlength{\bibitemsep}{1em}
+
+% Indentation after the first line
+\setlength{\bibhang}{2em}
+
+% Break too long URLs
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{8000}
+
+% Source of the bibliography file (biblatex)
+\addbibresource{sources/literature.bib}
+
+% Use default ACS formatting from biblatex-chem

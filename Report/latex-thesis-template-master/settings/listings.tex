@@ -1,0 +1,252 @@
+\usepackage{listings}
+\usepackage[many]{tcolorbox}
+
+% name of listings in the toc
+\renewcommand\lstlistlistingname{List of Listings}
+
+% general settings for listing
+\lstset{
+    xleftmargin=1.1cm,
+    belowskip=2em,
+    basicstyle=\fontsize{10}{15}\ttfamily,
+    basewidth  = {.5em,0.4em},
+    captionpos=t,
+    lineskip={2pt},
+    backgroundcolor=\color{white},
+    framextopmargin=6pt,
+    framexrightmargin=0pt,
+    framexleftmargin=0.9em,    
+    framexbottommargin=6pt, 
+    frame=l,
+%    frame=single,        
+%    frame=tb, framerule=0pt,    
+    framesep=6.5mm,
+    fillcolor=\color{white},
+    rulecolor=\color{middlegray},
+    numbers=left,
+    numberstyle=\normalfont\color{middlegray},
+%    numberstyle=\footnotesize,    
+    numbersep=10pt,
+    abovecaptionskip=10pt, %space above the caption
+    belowcaptionskip=10pt, %space below the caption
+    extendedchars=true,
+    showstringspaces=false,
+    showspaces=false,
+    stepnumber=1, % the step between two line-numbers. If it is 1 each line will be numbered
+    tabsize=2,
+    breaklines=true,
+    showtabs=false,
+    upquote=true,
+    % German umlauts
+    literate=%
+    {Ö}{{\"O}}1
+    {Ä}{{\"A}}1
+    {Ü}{{\"U}}1
+    {ß}{{\ss}}1
+    {ü}{{\"u}}1
+    {ä}{{\"a}}1
+    {ö}{{\"o}}1
+}
+
+% define language
+\lstdefinelanguage{JavaScript}{
+    keywords={typeof, new, true, false, catch, then, function, return, null, catch, switch, var, if, in, while, do, else, case, break, default},
+    keywordstyle=\color{editorGreen}\bfseries,
+    ndkeywords={class, export, boolean, throw, implements, import, this, const},
+    ndkeywordstyle=\color{vscodeblue}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=false,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{editorGreen}\ttfamily,
+    stringstyle=\color{darkred}\ttfamily,
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstdefinelanguage{SQL}{
+    keywords={select, where, from},
+    keywordstyle=\color{editorGreen}\bfseries,
+    ndkeywords={},
+    ndkeywordstyle=\color{vscodeblue}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=false,
+    comment=[l]{--},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{editorGreen}\ttfamily,
+    stringstyle=\color{darkred}\ttfamily,
+    morestring=[b]',
+    morestring=[b]"
+}
+
+
+\lstdefinelanguage{HTML5}{
+  language=html,
+  sensitive=true,	
+  alsoletter={<>=-},	
+  morecomment=[s]{<!-}{-->},
+  tag=[s],
+  otherkeywords={
+  % General
+  >,
+  % Standard tags
+	<!DOCTYPE,
+  </html, <html, <head, <title, </title, <style, </style, <link, </head, <meta, />,
+	% body
+	</body, <body,
+	% Divs
+	</div, <div, </div>, 
+	% Paragraphs
+	</p, <p, </p>,
+	% scripts
+	</script, <script,
+  % More tags...
+  <canvas, /canvas>, <svg, <rect, <animateTransform, </rect>, </svg>, <video, <source, <iframe, </iframe>, </video>, <image, </image>, <header, </header, <article, </article
+  },
+  ndkeywords={
+  % General
+  =,
+  % HTML attributes
+  charset=, src=, id=, width=, height=, style=, type=, rel=, href=,
+  % SVG attributes
+  fill=, attributeName=, begin=, dur=, from=, to=, poster=, controls=, x=, y=, repeatCount=, xlink:href=,
+  % properties
+  margin:, padding:, background-image:, border:, top:, left:, position:, width:, height:, margin-top:, margin-bottom:, font-size:, line-height:,
+	% CSS3 properties
+  transform:, -moz-transform:, -webkit-transform:,
+  animation:, -webkit-animation:,
+  transition:,  transition-duration:, transition-property:, transition-timing-function:,
+  }
+}
+
+\lstdefinestyle{html} {%
+  % Code design
+  keywordstyle=\color{lightblack}\bfseries,
+  ndkeywordstyle=\color{lightblack}\bfseries,
+  identifierstyle=\color{lightblack},
+  commentstyle=\color{green}\ttfamily,
+  stringstyle=\color{darkred}\ttfamily,
+  % Code
+  language=HTML5,
+%  alsolanguage=JavaScript,
+  alsodigit={.:;},	
+  tabsize=2,
+  showtabs=false,
+  showspaces=false,
+  showstringspaces=false,
+  extendedchars=true,
+  breaklines=true,
+  % German umlauts
+  literate=%
+  {Ö}{{\"O}}1
+  {Ä}{{\"A}}1
+  {Ü}{{\"U}}1
+  {ß}{{\ss}}1
+  {ü}{{\"u}}1
+  {ä}{{\"a}}1
+  {ö}{{\"o}}1
+}
+
+\lstdefinelanguage{CSS} 
+{morekeywords={color,background,margin,padding,margin,padding,font,weight,display,position,top,left,right,bottom,list,style,border,size,white,space,min,width, 	transition}, 
+	sensitive=false, 
+	morecomment=[l]{//}, 
+	morecomment=[s]{/*}{*/}, 
+	morestring=[b]", 
+}
+
+\lstdefinestyle{css} {%
+  language=CSS,
+  keywordstyle=\color{lightblack},
+}
+
+\lstdefinestyle{js} {
+  language=JavaScript
+}
+
+\lstdefinestyle{sql} {
+  language=SQL,
+  keywordstyle=\color{azure}  
+}
+
+% Define Python style
+\lstdefinestyle{python} {
+    language=Python,
+    keywordstyle=\color{editorGreen}\bfseries,
+    commentstyle=\color{editorGreen}\ttfamily,
+    stringstyle=\color{darkred}\ttfamily,
+    numberstyle=\normalfont\color{middlegray},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+}
+
+\definecolor{vscodeLightBackground}{RGB}{255,255,255}
+\definecolor{vscodeLightComment}{RGB}{0,128,0}
+\definecolor{vscodeLightKeyword}{RGB}{0,0,255}
+\definecolor{vscodeLightString}{RGB}{163,21,21}
+\definecolor{vscodeLightNumber}{RGB}{9,134,88}
+\definecolor{vscodeLightIdentifier}{RGB}{0,16,128}
+\definecolor{vscodeLightFunctionCall}{RGB}{121,94,38}
+\definecolor{vscodeLightLineNumber}{RGB}{160,160,160}
+\definecolor{vscodeLightDecorator}{RGB}{163,21,21}
+
+\lstdefinestyle{python-vscode} {
+    language=Python,
+    backgroundcolor=\color{vscodeLightBackground},
+    basicstyle=\fontsize{10}{15}\ttfamily\color{black},
+    keywordstyle=\color{vscodeLightKeyword},
+    commentstyle=\color{vscodeLightComment},
+    stringstyle=\color{vscodeLightString},
+    numberstyle=\tiny\color{vscodeLightLineNumber},
+    identifierstyle=\color{black},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    numbers=left,
+    numbersep=8pt,
+    xleftmargin=1.1cm,
+    frame=none,
+    rulecolor=\color{black},
+    framesep=2pt,
+    stepnumber=1,
+    tabsize=4,
+    literate=
+        {0}{{\color{vscodeLightNumber}0}}1
+        {1}{{\color{vscodeLightNumber}1}}1
+        {2}{{\color{vscodeLightNumber}2}}1
+        {3}{{\color{vscodeLightNumber}3}}1
+        {4}{{\color{vscodeLightNumber}4}}1
+        {5}{{\color{vscodeLightNumber}5}}1
+        {6}{{\color{vscodeLightNumber}6}}1
+        {7}{{\color{vscodeLightNumber}7}}1
+        {8}{{\color{vscodeLightNumber}8}}1
+        {9}{{\color{vscodeLightNumber}9}}1
+        {.0}{{\color{vscodeLightNumber}.0}}2
+        {.1}{{\color{vscodeLightNumber}.1}}2
+        {.2}{{\color{vscodeLightNumber}.2}}2
+        {.3}{{\color{vscodeLightNumber}.3}}2
+        {.4}{{\color{vscodeLightNumber}.4}}2
+        {.5}{{\color{vscodeLightNumber}.5}}2
+        {.6}{{\color{vscodeLightNumber}.6}}2
+        {.7}{{\color{vscodeLightNumber}.7}}2
+        {.8}{{\color{vscodeLightNumber}.8}}2
+        {.9}{{\color{vscodeLightNumber}.9}}2,
+    morekeywords=[1]{import, from, def, class, return, if, elif, else, for, while, try, except, finally, with, as, lambda, yield, pass, break, continue, and, or, not, is, in, True, False, None},
+    morekeywords=[2]{Flask, jsonify, request, render_template, TurbineDataFetcher, WeatherDataFetcher, PowerCalculator, load_efficiency_curve, calculate_hydrogen_production, calculate_lohc_values},
+    keywordstyle=[1]\color{vscodeLightKeyword},
+    keywordstyle=[2]\color{vscodeLightIdentifier},
+    morecomment=[s][\color{vscodeLightDecorator}]{@}{(},
+}
+
+%Usage
+%\begin{minipage}{\linewidth}
+%\begin{lstlisting}[style=js, caption={Flux Action Creator}, label=lst:actionCreator] 
+%create: function(text) {
+  %AppDispatcher.dispatch({
+    %type: Constants.TODO_CREATE,
+    %payload: 'sample'
+  %});
+%},
+%\end{lstlisting}
+%\end{minipage}

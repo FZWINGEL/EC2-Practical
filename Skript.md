@@ -52,7 +52,7 @@ $$
 
 ---
 
-An advantage of the controlled-current method is the possibility of calculating differential capacity plots (also known as incremental capacity plots). These plots are the derivative of the charge-discharge curves with respect to the potential (dQ/dE, Equation 1.1.3). These plots can provide information about the multiple redox processes, phase transitions and cell degradation processes during battery cycling.`<sup>`11-13`</sup>`
+An advantage of the controlled-current method is the possibility of calculating differential capacity plots (also known as incremental capacity plots). These plots are the derivative of the charge-discharge curves with respect to the potential (dQ/dE, Equation 1.1.3). These plots can provide information about the multiple redox processes, phase transitions and cell degradation processes during battery cycling.`<sup>`11-13 `</sup>`
 
 $$
 \frac{dQ}{dE} \approx \frac{Q_{k+1} - Q_k}{E_{k+1} - E_k} \qquad [1.1.3]
@@ -104,7 +104,7 @@ $$
 \omega = 2 \cdot \pi \cdot f
 $$
 
-Here, *j(t)* is the current at a specific time (*t*), *j*`<sub>`max`</sub>` is the amplitude of the current signal and likewise, *E*`<sub>`max`</sub>` is the amplitude of the potential. Here, the variable *i* is the imaginary number (-1)`<sup>`1/2`</sup>` and *f* is the frequency in s`<sup>`-1`</sup>`. The variable *φ* is the phase shift (also known as the phase angle) between the potential and the current signals. During a typical EIS experiment, amplitudes *E*`<sub>`max`</sub>` and *j*`<sub>`max`</sub>`, as well as *φ*, are measured at different applied frequencies.
+Here, *j(t)* is the current at a specific time (*t*), *j* `<sub>`max `</sub>` is the amplitude of the current signal and likewise, *E* `<sub>`max `</sub>` is the amplitude of the potential. Here, the variable *i* is the imaginary number (-1)`<sup>`1/2 `</sup>` and *f* is the frequency in s `<sup>`-1 `</sup>`. The variable *φ* is the phase shift (also known as the phase angle) between the potential and the current signals. During a typical EIS experiment, amplitudes *E* `<sub>`max `</sub>` and *j* `<sub>`max `</sub>`, as well as *φ*, are measured at different applied frequencies.
 
 ### A quick review on AC circuits
 
@@ -180,7 +180,7 @@ One of the most common ways to present EIS data is in a *Nyquist plot* (–$Z_{\
 
 **Figure 1.2.5** Nyquist plots for simple RC circuits connected in series (left) and in parallel (right); R₁ = 50 Ω and C₁ = 1 μF. The arrow indicates the direction in which the frequency is increasing.
 
-The spectra shown in Figure 1.2.5 are not only significantly different in shape, but also in the magnitude of the impedance in Z`<sub>`Im`</sub>`, even though the values of R`<sub>`1`</sub>` and C`<sub>`1`</sub>` are exactly the same. Note, however, that the resistance can be obtained directly from the x-axis on both plots and it is exactly 50 Ω. The difference between the spectra can be easily identified when we calculate the total impedance of each circuit independently:
+The spectra shown in Figure 1.2.5 are not only significantly different in shape, but also in the magnitude of the impedance in Z `<sub>`Im `</sub>`, even though the values of R `<sub>`1 `</sub>` and C `<sub>`1 `</sub>` are exactly the same. Note, however, that the resistance can be obtained directly from the x-axis on both plots and it is exactly 50 Ω. The difference between the spectra can be easily identified when we calculate the total impedance of each circuit independently:
 
 For the RC-series circuit, based on the basics of electrical circuits, the impedance of each element is simply added:
 
@@ -198,7 +198,7 @@ $$
 Z_{\text{Series}} = R_1 - i \frac{1}{\omega C_1} \qquad [1.2.9]
 $$
 
-Now, it is evident that the frequency-dependence lies only on the capacitive element and that at low frequencies the imaginary impedance Z`<sub>`Im`</sub>` approaches infinity. (Hence the observed straight line with an intercept at 50 Ω at Z`<sub>`Re`</sub>` in the Nyquist plot).
+Now, it is evident that the frequency-dependence lies only on the capacitive element and that at low frequencies the imaginary impedance Z `<sub>`Im `</sub>` approaches infinity. (Hence the observed straight line with an intercept at 50 Ω at Z `<sub>`Re `</sub>` in the Nyquist plot).
 
 In the case of the RC-parallel circuit,
 
@@ -414,54 +414,26 @@ In general, scientific papers are organized into a standard format that includes
 
 1. **Abstract:** Most scientific publications require an informative summary (abstract) that contain between 80 and 250 words in total. Avoid acronyms and abbreviations, but if needed define at first use within the abstract and at first use within the text. It is recommended to write the abstract last (once the full article is written) so that it fully portrays the contents of the manuscript. Moreover, the **verb tenses used per sentence depend on which section of the manuscript it refers to**
 2. **Introduction:** This section should start with presenting broad statements regarding the scientific problem and the research motivation. Related and relevant previous work should be presented, accurately cited and discussed within the context of the current project. It is important to highlight how the current work is different and contributes new insights from the previous work. Note that the verb tenses used in this section depend on the type of sentence:
-
 a. When stating a widely accepted fact, the **present tense** is appropriate:
-
 i. "DNA **is** composed of four nucleotides."
-
 b. When referring to a previous study, the **present perfect tense** is used. This tense demonstrates that the work was done in the past but its results are still relevant and applicable in the present (i). It also applies to describe an event that occurred in the past but continues in the present (ii).
-
 i. "Brown and coworkers **have shown** that [...]."
-
 ii. "Patients with XYZ syndrome **have been surveyed** for the last 10 years.
-
 c. When referring to a specific figure (data set), result or paper in a previously published work, the **present tense** is used:
-
 i. "The results of their study **indicate** that ion-dipole interactions **are** dominant".
-
 d. When referring specifically to previously published methodology, the **past tense** is appropriate:
-
 i. Li and coworkers **used** photovoltage decay measurements and **distinguished** various simultaneous interfacial phenomena.
-
 3. **Experimental Details and/or Theoretical Basis** (also known as "*Experimental Methods*", "*Methodology*", "*Materials and Methods*") : This section should provide all the details necessary so that another experienced scientist may repeat the work and obtain similar results. Identify the materials used with correct chemical formulas, chemical names and provide information on purity. A description of non-standard and/or home-built apparatus should be provided. If standard equipment is used, provide the company name and model number in parenthesis. Describe all procedures used, unless standard. In the case of the latter, provide appropriate citations. Note and emphasize any hazards during the procedures, e.g. explosive, pyrophoric, toxicity properties. This section should be **written entirely in past tense** because it reports what has been done during the course of the study.
-4. **Results:** Show and summarize all collected data and statistical treatment applied. Use equations, figures and tables when necessary for clarity and brevity. Include only
-
----
-
-relevant data but with enough detail to justify your conclusions. Since the experiments
-done to obtain the data in this section have been completed prior to writing the
-manuscript, this section should be written (for the most part) in the **past tense** (a & b).
-However, similar to the Introduction section, when referring to a specific figure, table,
-section, etc. the present tense is necessary (c).
-
----
-
+4. **Results:** Show and summarize all collected data and statistical treatment applied. Use equations, figures and tables when necessary for clarity and brevity. Include onlyrelevant data but with enough detail to justify your conclusions. Since the experiments done to obtain the data in this section have been completed prior to writing the manuscript, this section should be written (for the most part) in the **past tense** (a & b). However, similar to the Introduction section, when referring to a specific figure, table, section, etc. the present tense is necessary (c).
 a. "No fluorescence **was detected** in the control sample".
 b. "Titration analysis **showed** a final water concentration of (10 ± 1) ppm for the sample."
 c. "Figure 1.2 **shows** the particle size distribution of the as-synthesized IrO₂ nanoparticles."
-
 **5. Discussion:** In this section, the results from the study are interpreted and compared. Be objective when establishing connections between your data and describe the logical implications. Consider these guide questions when writing this section: 1) Was the problem resolved?; 2) What has been contributed?; 3) What new insights are these results providing?; 4) How do these results compare to previously published work and the current knowledge in the field? Similar to the "Introduction" section, the verb tense depends on the purpose of the sentence.
-
 a. When referring to your results use the **past tense**, but when establishing a conclusion use the **present tense**:
-
 i. "The extinction coefficient of Complex X at 310 nm **was determined** earlier to be 3300 M⁻¹ cm⁻¹, which **suggests** a ligand-to-metal charge transfer absorption."
-
 ii. "Taken together the potential-dependent spectra **suggest** that the absorbance at 220 nm **is** predominantly from an IrIV species and that the 318 nm band **is** a combination of both IrIII and IrIV species."
-
 **6. Conclusions:** The purpose of this section is to emphasize the main conclusions of the work and how they correlate to the original problem. Do not repeat the content in the "Discussion" section. This section should be written in the **present tense**:
-
 a. "Monomeric Ir(III/IV) anions strongly **adsorb** to the surface of metal oxide photoelectrodes and **promote** IrO₂ nanoparticle deposition. However, the monomer **is** detrimental to the performance of photoanodes in IrO₂-catalyzed water-splitting systems."
-
 **7. References:** This section can either appear as a whole at the end of a manuscript or as footnotes throughout the text. The formatting required for the references depends on the publishing company. However, regardless of the formatting used, the information provided per citation and/or reference must allow any reader to find its content.
 
 For your report, please include the following sections: **Introduction**, **Experimental**, **Results**, **Discussion** and **References**. Format all your references as per The ACS Style Guide, 3rd Edition, Chapter 14 (see Table attached)
