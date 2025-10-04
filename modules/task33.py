@@ -21,7 +21,6 @@ from .diffusion import get_calculated_diffusion, add_diffusion_coefficient
 from .io_utils import read_biologic_table, write_csv
 from .pipeline import TaskReport
 from .plotting import beautify_axes, safe_save
-from .task32_eis import _extract_eis_parameters_both
 from .task32_eis import fit_with_impedance_py
 from .task32_eis import ECFFit
 from .utils import extract_rpm_from_name, get_column, label_from_filename
@@ -130,30 +129,49 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             omega = 2 * np.pi * (rpms / 60.0)
             inv_sqrt_omega = 1.0 / np.sqrt(omega)
 
-            E_targets = np.linspace(E_grid.min() + 0.05 * np.ptp(E_grid), E_grid.max() - 0.05 * np.ptp(E_grid), 8)
+            E_targets = np.linspace(E_grid.min() + 0.05 * np.ptp(E_grid), E_grid.max() - 0.05 * np.ptp(E_grid), 24)
             kl_rows: List[KLPoint] = []
             jk_vs_E: List[Tuple[float, float]] = []
             kl_summ_rows: List[Dict[str, float]] = []
+            accepted_E: List[float] = []
+
+            # Heuristic: restrict KL to diffusion-dominated potentials
+            rpm_max = int(rpms.max())
+            j_high = j_by_rpm[rpm_max]
+            # Use a high percentile to avoid outlier-driven thresholds
+            j_ref = float(np.nanpercentile(np.abs(j_high), 85)) if len(j_high) else 0.0
+            plateau_thresh = 0.20 * j_ref if j_ref > 0 else float("inf")
 
             for E0 in E_targets:
                 j_at_E = np.array([j_by_rpm[rpm][np.argmin(np.abs(E_grid - E0))] for rpm in rpms])
                 mask = np.isfinite(j_at_E) & (np.abs(j_at_E) > 1e-6)
                 if mask.sum() < 3:
                     continue
-                y = 1.0 / j_at_E[mask]
+                y = 1.0 / np.abs(j_at_E[mask])
                 x = inv_sqrt_omega[mask]
-                A = np.vstack([x, np.ones_like(x)]).T
-                slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
-                jk = 1.0 / intercept
-                kl_rows.extend(
-                    KLPoint(E_V=float(E0), inv_sqrt_omega_s05=float(xi), inv_j_cm2_A_inv=float(yi))
-                    for xi, yi in zip(x, y)
-                )
-                jk_vs_E.append((E0, jk))
+
+                # eligibility: high-rpm current near plateau and good KL linearity
+                idx_E = int(np.argmin(np.abs(E_grid - E0)))
+                near_plateau = np.abs(j_high[idx_E]) >= plateau_thresh
+                if near_plateau and (len(x) >= 3):
+                    A = np.vstack([x, np.ones_like(x)]).T
+                    slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
+                    y_pred = slope * x + intercept
+                    ss_res = float(np.sum((y - y_pred) ** 2))
+                    ss_tot = float(np.sum((y - float(np.mean(y))) ** 2))
+                    r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+                    if (r2 >= 0.95) and np.isfinite(slope) and (slope > 0) and np.isfinite(intercept) and (intercept != 0):
+                        jk = 1.0 / intercept
+                        kl_rows.extend(
+                            KLPoint(E_V=float(E0), inv_sqrt_omega_s05=float(xi), inv_j_cm2_A_inv=float(yi))
+                            for xi, yi in zip(x, y)
+                        )
+                        jk_vs_E.append((E0, jk))
+                        accepted_E.append(float(E0))
 
                 # KL slope S = 1/B; B = 0.62 n F D^(2/3) nu^(-1/6) C*
                 # Work on current density, so area cancels
-                if np.isfinite(slope) and (slope > 0):
+                if 'slope' in locals() and near_plateau and np.isfinite(slope) and (slope > 0):
                     B_val = 1.0 / float(slope)
                     denom = 0.62 * N_ELECTRONS * F_CONST * C_BULK_MOL_PER_CM3
                     if denom > 0 and (NU_CMS2 > 0):
@@ -188,13 +206,13 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                         add_diffusion_coefficient(D_med, "Koutecky-Levich (Task 3.3)")
                         report.add_message(f"[KL] D_KL~{D_med:.2e} cm^2/s (median across E)")
 
-                mid = len(jk_vs_E) // 2
-                if mid < len(jk_vs_E):
-                    E_mid = jk_vs_E[mid][0]
+                mid = len(accepted_E) // 2
+                if mid < len(accepted_E) and len(accepted_E) > 0:
+                    E_mid = accepted_E[mid]
                     j_mid = np.array([j_by_rpm[rpm][np.argmin(np.abs(E_grid - E_mid))] for rpm in rpms])
                     mask = np.isfinite(j_mid) & (np.abs(j_mid) > 1e-6)
                     x = inv_sqrt_omega[mask]
-                    y = 1.0 / j_mid[mask]
+                    y = 1.0 / np.abs(j_mid[mask])
                     A = np.vstack([x, np.ones_like(x)]).T
                     slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
                     figkl, axkl = plt.subplots(figsize=(5.4, 4.0))
@@ -468,8 +486,13 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
 
     # --- Comparison vs Interface 1 (Task 3.2) ---
     try:
-        # Interface 2 values from current run
-        D_I2 = get_calculated_diffusion()
+        # Interface 2 D from KL output (do not use global aggregator to avoid mixing with I1)
+        D_I2 = float("nan")
+        kl_path = Path("results") / "T3.3_KL_diffusion.csv"
+        if kl_path.exists():
+            df_kl = pd.read_csv(kl_path)
+            if "D_KL_cm2_s" in df_kl.columns:
+                D_I2 = float(np.nanmedian(pd.to_numeric(df_kl["D_KL_cm2_s"], errors="coerce")))
         k0_I2 = float("nan")
         peis_summary_path = Path("results") / "T3.3_PEIS_summary.csv"
         if peis_summary_path.exists():
