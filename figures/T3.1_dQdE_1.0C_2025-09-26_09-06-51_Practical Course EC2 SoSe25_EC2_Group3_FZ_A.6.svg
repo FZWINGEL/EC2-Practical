@@ -134,7 +134,7 @@ L 413.25 25.8
      </g>
     </g>
     <g id="text_7">
-     <!-- $E$ [V] -->
+     <!-- E [V] -->
      <g transform="translate(220.6525 273.515938)">
       <text>
        <tspan x="0" y="-0.359375" style="font-style: oblique; font-size: 14px; font-family: 'DejaVu Sans'">E</tspan>
@@ -243,7 +243,7 @@ L 413.25 25.8
      </g>
     </g>
     <g id="text_14">
-     <!-- $\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$ -->
+     <!-- Math expression removed for LaTeX compatibility -->
      <g transform="translate(27.471875 161.44) rotate(-90)">
       <text>
        <tspan x="0" y="-7.551563" style="font-style: oblique; font-size: 9.8px; font-family: 'DejaVu Sans'">d</tspan>

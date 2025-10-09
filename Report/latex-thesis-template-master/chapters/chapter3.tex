@@ -1,3 +1,37 @@
-\chapter{Thesis Objective}
+\chapter{Results}
 
+\section{Coin-cell cycling (Task 3.1)}
+We did not perform cyclic voltammetry (CV) on the assembled coin cells; therefore, this section focuses on galvanostatic charge\textendash discharge characterization at 0.1\,C, 1\,C, and 2\,C, together with incremental capacity (dQ/dE) analysis and voltage\textendash time transients.
 
+\subsection{Potential\textendash capacity profiles}
+\autoref{fig:T31_potential_vs_capacity} overlays the specific capacity\,\textit{vs.}\,potential curves at the three C\textendash rates. At the low rate (0.1\,C), the discharge capacity is highest and the (de)lithiation plateaus are most clearly developed. With increasing rate (1\,C and 2\,C), polarization grows (larger charge\textendash discharge hysteresis) and the accessible capacity decreases, consistent with kinetic and transport limitations. The chosen voltage window (2.4\,V to 4.2\,V) spans the practical operating region of the NCM\,811\,\textbar\,graphite full cell; at low rate it enables utilization of most of the available capacity, while at higher rates kinetic limitations dominate the accessible capacity.
+
+\begin{figure}[h]
+\centering
+\includesvg[width=0.95\textwidth]{T3.1_Potential_vs_Capacity}
+\caption{Potential\,\textit{vs.}\,specific capacity at 0.1\,C, 1\,C and 2\,C for the assembled coin cell. Higher C\textendash rates exhibit increased polarization and reduced accessible capacity compared to 0.1\,C.}
+\label{fig:T31_potential_vs_capacity}
+\end{figure}
+
+\subsection{Incremental capacity (dQ/dE) analysis}
+The incremental capacity plots in \autoref{fig:T31_dQdE} highlight potential\textendash resolved processes during charge and discharge. Distinct features observed at 0.1\,C broaden and diminish in amplitude at 1\,C and 2\,C, reflecting increased overpotentials and reduced time available for phase transitions. Only cathodic processes are considered when assigning discharge features. The overall trend\,\textemdash\,peak shifting to higher/lower potentials with rate and decreasing peak area\,\textemdash\,is consistent with transport and kinetic limitations at higher C\textendash rates.
+
+\begin{figure}[h]
+\centering
+\includesvg[width=0.95\textwidth]{T3.1_dQdE}
+\caption{Incremental capacity (dQ/dE)\,\textit{vs.}\,potential for cycling at 0.1\,C, 1\,C and 2\,C. Increasing rate broadens and depresses features, consistent with higher polarization and reduced time for phase transitions.}
+\label{fig:T31_dQdE}
+\end{figure}
+
+\subsection{Voltage\textendash time transients}
+\autoref{fig:T31_vt} shows the voltage\,\textit{vs.}\,time profiles at the three rates. As expected, the total charge/discharge time scales inversely with C\textendash rate (longest at 0.1\,C, shortest at 2\,C). The more pronounced flat regions at low rate correlate with the sharper dQ/dE features, while at higher rate the profiles are more sloped due to increased IR drop and kinetic losses.
+
+\begin{figure}[h]
+\centering
+\includesvg[width=0.95\textwidth]{T3.1_V_vs_t}
+\caption{Voltage\,\textit{vs.}\,time at 0.1\,C, 1\,C and 2\,C. Faster rates shorten the (dis)charge durations and increase overall polarization.}
+\label{fig:T31_vt}
+\end{figure}
+
+\subsection{Coulombic efficiency}
+The Coulombic efficiency (CE) was evaluated as the ratio of discharge to charge capacity for each cycle. At 0.1\,C, CE rapidly approaches near\textendash unity after initial formation, indicating minimal parasitic reactions once the SEI is stabilized. At higher rates (1\,C and 2\,C), CE remains high but can show a slightly larger deviation from unity, consistent with increased polarization and potential side reactions at elevated current. Across all three rates, the trends are consistent with a well\textendash behaved NCM\,811\,\textbar\,graphite full cell operating within the selected voltage window.

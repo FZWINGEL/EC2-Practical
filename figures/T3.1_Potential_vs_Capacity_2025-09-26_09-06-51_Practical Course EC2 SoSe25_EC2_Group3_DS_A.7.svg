@@ -179,7 +179,7 @@ L 341.7315 22.318125
      </g>
     </g>
     <g id="text_10">
-     <!-- Capacity $\left[\frac{\text{mAh}}{\text{g}}\right]$ -->
+     <!-- Capacity \left[\frac{\text{mAh}}{\text{g}}\right] -->
      <g transform="translate(144.922 266.325)">
       <text>
        <tspan x="0" y="-0.41875" style="font-size: 14px; font-family: 'DejaVu Sans'">C</tspan>
