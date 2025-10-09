@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+import shutil
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -22,7 +23,8 @@ except Exception:
 # Configuration
 # -----------------------------
 # Theoretical capacity for graphite anode (adjust if needed)
-THEORETICAL_CAPACITY_MAH_G: float = 372.0
+# Updated to match expected C-rate currents: 0.1C=0.2376mA, 1C=2.3756mA, 2C=4.752mA
+THEORETICAL_CAPACITY_MAH_G: float = 244.93
 
 # Mass of active material per coin cell in mg, derived from Skript.md specs.
 # Using graphite anode areal loading 6.3 mg/cm^2 and anode disc Ø14 mm:
@@ -41,6 +43,33 @@ plt.rcParams["grid.alpha"] = 0.25
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["axes.spines.right"] = False
 plt.rcParams["svg.fonttype"] = "none"  # keep text as text in SVG
+plt.rcParams["text.usetex"] = False  # Prefer mathtext by default; try enabling LaTeX below
+
+
+def try_enable_usetex() -> None:
+    """
+    Enable LaTeX rendering only if a working LaTeX toolchain is available.
+    Falls back to mathtext if not.
+    """
+    use_tex = False
+    try:
+        # Require latex and either dvipng or dvisvgm for rendering
+        if shutil.which("latex") and (shutil.which("dvipng") or shutil.which("dvisvgm")):
+            import matplotlib as mpl  # local import to avoid global dependency at import time
+            mpl.rcParams["text.usetex"] = True
+            # Probe a minimal draw to verify the toolchain works
+            fig = plt.figure()
+            fig.text(0.5, 0.5, r"$E$ [V]")
+            fig.canvas.draw()
+            plt.close(fig)
+            use_tex = True
+    except Exception:
+        use_tex = False
+    if not use_tex:
+        plt.rcParams["text.usetex"] = False
+
+
+try_enable_usetex()
 
 
 # -----------------------------
@@ -411,7 +440,15 @@ def compute_ce_per_cycle(df: pd.DataFrame, mass_g: float) -> pd.DataFrame:
         cycle=("cycle_est", "first"),
         is_discharge=("is_discharge", "first"),
         mean_I_A=("current_a", "mean"),
-        cap_end_mAh=("cap_mAh_seg", lambda x: float(np.nanmax(np.abs(x)) if len(x) else np.nan)),
+        # Use nan-aware finite max to avoid RuntimeWarning when all values are NaN
+        cap_end_mAh=(
+            "cap_mAh_seg",
+            lambda x: (
+                float(np.nanmax(np.abs(x)))
+                if np.isfinite(x.to_numpy(dtype=float)).any()
+                else float("nan")
+            ),
+        ),
     ).reset_index()
 
     # Aggregate into cycles
@@ -524,8 +561,8 @@ def plot_cv_overlay(sample_id: str, cycles: List[pd.DataFrame], outpath: Path) -
     colors = plt.cm.tab10.colors
     for i, cyc in enumerate(cycles, start=1):
         ax.plot(cyc["E_V"].values, cyc["I_A"].values * 1000.0, lw=1.5, color=colors[(i - 1) % 10], label=f"Cycle {i}")
-    ax.set_xlabel("E (V)")
-    ax.set_ylabel("I (mA)")
+    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
+    ax.set_ylabel(r"$I$ $\left[\text{mA}\right]$", fontsize=14)
     ax.set_title(f"CV overlay (first 3 cycles) - {sample_id}")
     ax.legend()
     fig.tight_layout()
@@ -598,9 +635,9 @@ def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, 
     except Exception:
         pass
 
-    ax.set_xlabel("Capacity (mAh/g)")
-    ax.set_ylabel("Potential (V)")
-    ax.set_title(f"Potential vs Capacity - {sample_id}")
+    ax.set_xlabel(r"Capacity $\left[\frac{\text{mAh}}{\text{g}}\right]$", fontsize=14)
+    ax.set_ylabel(r"Potential $\left[\text{V}\right]$", fontsize=14)
+    ax.set_title(f"Potential vs Capacity")
     # Nice x-limits
     try:
         qmax = float(np.nanmax(np.abs(df["cap_mAh_g_seg"].values)))
@@ -686,11 +723,113 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
             ax.plot(Es, dQ_dE, lw=1.4, color=colors[color_idx % 10], label=f"Cycle {cyc}")
             color_idx += 1
 
-    ax.set_xlabel("E (V)")
-    ax.set_ylabel("dQ/dE (mAh g^-1 V^-1)")
-    ax.set_title(f"dQ/dE (cathodic) - {sample_id}")
+    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
+    ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
+    ax.set_title(f"dQ/dE (cathodic)")
     #if color_idx > 0:
     #ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(outpath)
+    plt.close(fig)
+
+
+def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float, target_c_rate: float, outpath: Path) -> None:
+    """
+    Compute and plot dQ/dE vs E for cathodic (discharge) segments filtered by C-rate.
+    
+    Args:
+        sample_id: Sample identifier for plot title
+        df: DataFrame with processed data
+        mass_g: Mass in grams
+        target_c_rate: Target C-rate to filter by (e.g., 0.1, 1.0, 2.0)
+        outpath: Output path for the plot
+    """
+    fig, ax = plt.subplots(figsize=(6, 4))
+    colors = plt.cm.tab10.colors
+    color_idx = 0
+    
+    # Tolerance for C-rate matching (±20%)
+    c_rate_tolerance = 0.2
+
+    # Normalized capacity within segment
+    df = df.copy()
+    # Specific capacity in mAh/g for discharge segments
+    df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g
+
+    # Calculate C-rates for each segment to filter by
+    segments_with_crate = []
+    for cyc, gcyc in df.groupby("cycle_est", sort=True):
+        if cyc == 0:
+            continue
+        for sid, gseg in gcyc.groupby("seg_id", sort=True):
+            if not bool(gseg["is_discharge"].iloc[0]):
+                continue
+            
+            # Calculate C-rate for this segment
+            mean_current = gseg["current_a"].abs().mean()
+            c_rate = estimate_c_rate(mean_current, mass_g, THEORETICAL_CAPACITY_MAH_G)
+            
+            # Check if this segment matches the target C-rate
+            if abs(c_rate - target_c_rate) <= target_c_rate * c_rate_tolerance:
+                segments_with_crate.append((cyc, sid, gseg, c_rate))
+
+    if not segments_with_crate:
+        # No segments found for this C-rate
+        ax.text(0.5, 0.5, f"No discharge segments found\nfor {target_c_rate}C (±{c_rate_tolerance*100:.0f}%)", 
+                ha="center", va="center", transform=ax.transAxes, fontsize=12)
+        ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
+        ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
+        ax.set_title(f"dQ/dE (cathodic) - {target_c_rate}C")
+        fig.tight_layout()
+        fig.savefig(outpath)
+        plt.close(fig)
+        return
+
+    # Plot segments that match the target C-rate
+    for cyc, sid, gseg, c_rate in segments_with_crate:
+        E = gseg["voltage_v"].values
+        Q = gseg["cap_mAh_g_seg"].abs().values
+        if len(E) < 5:
+            continue
+            
+        # Smooth E and Q with Savitzky–Golay (fallback if SciPy unavailable)
+        if HAS_SCIPY:
+            n_pts = len(E)
+            win = min(11100, n_pts if n_pts % 2 == 1 else n_pts - 1)
+            if win >= 5:
+                poly = 3 if win > 5 else 2
+                Es = savgol_filter(E, window_length=win, polyorder=min(poly, win - 1), mode="interp")
+                Qs = savgol_filter(Q, window_length=win, polyorder=min(poly, win - 1), mode="interp")
+            else:
+                Es = smooth(E, window=7)
+                Qs = smooth(Q, window=7)
+        else:
+            Es = smooth(E, window=11)
+            Qs = smooth(Q, window=11)
+            
+        # Compute derivative dQ/dE with guards against tiny dE and spikes
+        with np.errstate(divide='ignore', invalid='ignore'):
+            dQ_dE = np.gradient(Qs, Es)
+        dE_local = np.gradient(Es)
+        tiny = max(1e-6, np.nanmedian(np.abs(dE_local)) * 0.01)
+        # Mask regions where voltage spacing is too small (unstable derivative)
+        dQ_dE = np.where(np.abs(dE_local) < tiny, np.nan, dQ_dE)
+        # Clip extreme outliers robustly
+        finite_mask = np.isfinite(dQ_dE)
+        if finite_mask.sum() > 20:
+            lo, hi = np.nanpercentile(dQ_dE[finite_mask], [1.0, 99.0])
+            dQ_dE = np.clip(dQ_dE, lo, hi)
+        # Lightly smooth the derivative to suppress residual spikes
+        dQ_dE = smooth(dQ_dE, window=min(101, max(7, (len(dQ_dE)//50)*2 + 1)))
+        ax.plot(Es, dQ_dE, lw=1.4, color=colors[color_idx % 10], 
+                label=f"Cycle {cyc} ({c_rate:.2f}C)")
+        color_idx += 1
+
+    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
+    ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
+    ax.set_title(f"dQ/dE (cathodic) - {target_c_rate}C")
+    if color_idx > 0:
+        ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(outpath)
     plt.close(fig)
@@ -706,17 +845,17 @@ def plot_voltage_over_time(sample_id: str, df: pd.DataFrame, outpath: Path) -> N
     color_e = "tab:blue"
     color_i = "tab:orange"
 
-    line_e, = ax.plot(t, e, lw=1.2, color=color_e, label="Voltage (V)")
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Potential (V)", color=color_e)
+    line_e, = ax.plot(t, e, lw=1.2, color=color_e, label="Voltage [V]")
+    ax.set_xlabel(r"Time [s]", fontsize=14)
+    ax.set_ylabel(r"Potential [V]", color=color_e, fontsize=14)
     ax.tick_params(axis='y', labelcolor=color_e)
 
     ax2 = ax.twinx()
-    line_i, = ax2.plot(t, i, lw=1.0, color=color_i, alpha=0.8, label="Current (A)")
-    ax2.set_ylabel("Current (A)", color=color_i)
+    line_i, = ax2.plot(t, i * 1000.0, lw=1.0, color=color_i, alpha=0.8, label="Current [mA]")
+    ax2.set_ylabel(r"Current [mA]", color=color_i, fontsize=14)
     ax2.tick_params(axis='y', labelcolor=color_i)
 
-    ax.set_title(f"Voltage and Current vs Time - {sample_id}")
+    ax.set_title(f"Voltage and Current vs Time")
 
     lines = [line_e, line_i]
     labels = [l.get_label() for l in lines]
@@ -770,6 +909,12 @@ def process_file(csv_path: Path, ce_records: List[Dict]) -> None:
     # 3) dQ/dE (cathodic only)
     dqdE_path = FIG_DIR / f"T3.1_dQdE_{csv_path.stem}{PLOT_EXT}"
     plot_dqdE_cathodic(sample_id, df, mass_g, dqdE_path)
+
+    # 4) dQ/dE (cathodic only) for specific C-rates
+    c_rates = [0.1, 1.0, 2.0]
+    for c_rate in c_rates:
+        dqdE_crate_path = FIG_DIR / f"T3.1_dQdE_{c_rate}C_{csv_path.stem}{PLOT_EXT}"
+        plot_dqdE_cathodic_by_crate(sample_id, df, mass_g, c_rate, dqdE_crate_path)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
