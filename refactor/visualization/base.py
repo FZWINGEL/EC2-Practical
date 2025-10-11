@@ -21,7 +21,11 @@ class Plotter(ABC):
 
     def save(self, figure: plt.Figure, filename: str) -> Path:
         path = self.config.resolve_figures(filename)
-        figure.savefig(path, dpi=300, bbox_inches="tight")
+        # Ensure filename has .png extension
+        if not filename.endswith('.png'):
+            filename = filename.rsplit('.', 1)[0] + '.png'
+            path = self.config.resolve_figures(filename)
+        figure.savefig(path, dpi=300, bbox_inches="tight", format='png', facecolor="white")
         plt.close(figure)
         return path
 

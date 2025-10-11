@@ -1,0 +1,109 @@
+%% Creator: Inkscape 1.4.2 (f4327f4, 2025-05-13), www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'T3.1_V_vs_t_svg-tex.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{432bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.66666667)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.14384732,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}0\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.2397528,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}100000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.33565832,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}200000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.4315638,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}300000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.52746928,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}400000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.6233748,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}500000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.71928024,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}600000\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.81518576,0.05833696){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}700000\end{tabular}}}}%
+    \put(0.50130208,0.02667462){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}Time (s)\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=9]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.12386887){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}0.5\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=10]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.18479863){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}1.0\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=11]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.24572842){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}1.5\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=12]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.30665818){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}2.0\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=13]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.36758794){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}2.5\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=14]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.42851773){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}3.0\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=15]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.48944751){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}3.5\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=16]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.09189815,0.55037728){\color[rgb]{0.12156863,0.46666667,0.70588235}\makebox(0,0)[rt]{\lineheight{1.25}\smash{\begin{tabular}[t]{r}4.0\end{tabular}}}}%
+    \put(0.04101201,0.34953704){\color[rgb]{0.12156863,0.46666667,0.70588235}\rotatebox{90}{\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}Potential (V)\end{tabular}}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=17]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.50130208,0.62083334){\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}Voltage and Current vs Time\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=18]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.75725117,0.13982928){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Voltage (V)\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=19]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.75725117,0.11264759){\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Current (mA)\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=20]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.91070599,0.14367877){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}−4\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=21]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.91070599,0.24219004){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}−2\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=22]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.91070599,0.34070135){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}0\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=23]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.91070599,0.4392126){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}2\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=24]{T3.1_V_vs_t_svg-tex.pdf}}%
+    \put(0.91070599,0.53772389){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}4\end{tabular}}}}%
+    \put(0.97167968,0.34953705){\color[rgb]{1,0.49803922,0.05490196}\rotatebox{90}{\makebox(0,0)[t]{\lineheight{1.25}\smash{\begin{tabular}[t]{c}Current (mA)\end{tabular}}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=25]{T3.1_V_vs_t_svg-tex.pdf}}%
+  \end{picture}%
+\endgroup%

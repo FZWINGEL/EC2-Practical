@@ -70,6 +70,8 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
 
     if lsv_files:
         fig, ax = plt.subplots(figsize=(6.2, 4.2))
+        plot_data = []  # Store plot data for sorting
+        
         for path in lsv_files:
             try:
                 df = read_biologic_table(path)
@@ -91,7 +93,9 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
             j_mA_cm2 = pd.to_numeric(df[i_col], errors="coerce").to_numpy() / GC_AREA_CM2
             rpm = extract_rpm_from_name(path)
             label = f"{rpm} rpm" if rpm is not None else label_from_filename(path)
-            ax.plot(e_v, j_mA_cm2, lw=1.0, label=label)
+            
+            # Store plot data with rpm for sorting
+            plot_data.append((rpm if rpm is not None else 0, e_v, j_mA_cm2, label))
 
             if rpm is not None:
                 df_use = df[[e_col, i_col]].copy()
@@ -100,9 +104,13 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
                     df_use["<I>/mA"] = df_use[i_col]
                 curves[rpm] = df_use
 
-        ax.set_xlabel("E (V vs Ag/AgCl)")
-        ax.set_ylabel("j (mA cm$^{-2}$)")
-        ax.set_title("Task 3.3 - LSVs at various rotation rates")
+        # Sort by rpm and plot
+        plot_data.sort(key=lambda x: x[0])
+        for _, e_v, j_mA_cm2, label in plot_data:
+            ax.plot(e_v, j_mA_cm2, lw=1.0, label=label)
+
+        ax.set_xlabel("E [V vs Ag/AgCl]")
+        ax.set_ylabel("j [mA cm$^{-2}$]")
         ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         report.record_figure(safe_save(fig, "T3.3_LSV_overlay.png"))
@@ -166,8 +174,8 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
                     figkl, axkl = plt.subplots(figsize=(5.4, 4.0))
                     axkl.plot(x, y, "o")
                     axkl.plot(x, slope * x + intercept, "-")
-                    axkl.set_xlabel("1/sqrt(omega) (s^0.5)")
-                    axkl.set_ylabel("1/j (cm^2 A^-1)")
+                    axkl.set_xlabel(r"$1/\sqrt{\omega}$ [s$^{1/2}$]")
+                    axkl.set_ylabel(r"$1/j$ [cm$^2$ A$^{-1}$]")
                     axkl.set_title(f"Koutecky-Levich at E = {E_mid:.3f} V")
                     beautify_axes(axkl)
                     report.record_figure(safe_save(figkl, "T3.3_KL_example.png"))
@@ -245,14 +253,20 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
                         j0 = 10 ** log10_j0
 
                         figtf, axtf = plt.subplots(figsize=(5.4, 4.0))
-                        axtf.plot(best["x"], best["y"], "o", label="data")
+                        axtf.plot(best["x"], best["y"], "o", label="Raw Data")
+                        
+                        # Extend fit line to y-axis (η=0)
                         xfit = np.linspace(np.min(best["x"]), np.max(best["x"]), 100)
-                        axtf.plot(xfit, best["slope"] * xfit + best["intercept"], "-", label=f"fit; R^2={best['r2']:.2f}; j0~{j0:.2e} A/cm^2")
-                        axtf.set_xlabel("log10(|j_k| / A cm^-2)")
-                        axtf.set_ylabel("eta (V)")
-                        axtf.set_title("Task 3.3 - Tafel from kinetic currents")
+                        axtf.plot(xfit, best["slope"] * xfit + best["intercept"], "-", label="Fit")
+                        
+                        # Calculate intersection with y-axis (η=0)
+                        x_intersect = -best["intercept"] / best["slope"]  # When η=0
+                        axtf.plot(x_intersect, 0, "ro", markersize=8, label=f"j₀: {j0:.2e} A/cm²")
+                        
+                        axtf.set_xlabel(r"log$_{10}$(|j$_k$|) [A cm$^{-2}$]")
+                        axtf.set_ylabel(r"$\eta$ [V]")
                         beautify_axes(axtf)
-                        axtf.legend(title="Data and fit", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
+                        axtf.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
                         report.record_figure(safe_save(figtf, "T3.3_Tafel.png"))
 
                         report.record_table(
@@ -395,7 +409,7 @@ def run_task33_lsv_eis(config: AnalysisConfig) -> TaskReport:
             debug_dir = Path("results/debugplots")
             debug_dir.mkdir(exist_ok=True, parents=True)
             debug_path = debug_dir / f"debug_PEIS_fit_{label_from_filename(path)}.png"
-            fig_debug.savefig(debug_path, dpi=150, bbox_inches="tight")
+            fig_debug.savefig(debug_path, dpi=300, bbox_inches="tight", format='png', facecolor="white")
             plt.close(fig_debug)
             report.record_figure(debug_path)
 

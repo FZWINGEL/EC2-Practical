@@ -31,6 +31,7 @@ class KLPoint:
     E_V: float
     inv_sqrt_omega_s05: float
     inv_j_cm2_A_inv: float
+    jk_A_cm2: float
 
 
 def _interpolate_to_common_grid(curves: Dict[int, pd.DataFrame]) -> Tuple[np.ndarray, Dict[int, np.ndarray]]:
@@ -74,6 +75,8 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
 
     if lsv_files:
         fig, ax = plt.subplots(figsize=(6.2, 4.2))
+        plot_data = []  # Store plot data for sorting
+        
         for path in lsv_files:
             try:
                 df = read_biologic_table(path)
@@ -95,7 +98,9 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             j_mA_cm2 = pd.to_numeric(df[i_col], errors="coerce").to_numpy() / GC_AREA_CM2
             rpm = extract_rpm_from_name(path)
             label = f"{rpm} rpm" if rpm is not None else label_from_filename(path)
-            ax.plot(e_v, j_mA_cm2, lw=1.0, label=label)
+            
+            # Store plot data with rpm for sorting
+            plot_data.append((rpm if rpm is not None else 0, e_v, j_mA_cm2, label))
 
             if rpm is not None:
                 df_use = df[[e_col, i_col]].copy()
@@ -104,9 +109,13 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                     df_use["<I>/mA"] = df_use[i_col]
                 curves[rpm] = df_use
 
-        ax.set_xlabel("E (V vs Ag/AgCl)")
-        ax.set_ylabel("j (mA cm$^{-2}$)")
-        ax.set_title("Task 3.3 - LSVs at various rotation rates")
+        # Sort by rpm and plot
+        plot_data.sort(key=lambda x: x[0])
+        for _, e_v, j_mA_cm2, label in plot_data:
+            ax.plot(e_v, j_mA_cm2, lw=1.0, label=label)
+
+        ax.set_xlabel("E [V vs Ag/AgCl]")
+        ax.set_ylabel("j [mA cm$^{-2}$]")
         ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         report.record_figure(safe_save(fig, "T3.3_LSV_overlay.png"))
@@ -129,18 +138,11 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             omega = 2 * np.pi * (rpms / 60.0)
             inv_sqrt_omega = 1.0 / np.sqrt(omega)
 
-            E_targets = np.linspace(E_grid.min() + 0.05 * np.ptp(E_grid), E_grid.max() - 0.05 * np.ptp(E_grid), 24)
+            E_targets = np.linspace(E_grid.min(), E_grid.max(), 50)  # Use all potentials
             kl_rows: List[KLPoint] = []
             jk_vs_E: List[Tuple[float, float]] = []
             kl_summ_rows: List[Dict[str, float]] = []
             accepted_E: List[float] = []
-
-            # Heuristic: restrict KL to diffusion-dominated potentials
-            rpm_max = int(rpms.max())
-            j_high = j_by_rpm[rpm_max]
-            # Use a high percentile to avoid outlier-driven thresholds
-            j_ref = float(np.nanpercentile(np.abs(j_high), 85)) if len(j_high) else 0.0
-            plateau_thresh = 0.20 * j_ref if j_ref > 0 else float("inf")
 
             for E0 in E_targets:
                 j_at_E = np.array([j_by_rpm[rpm][np.argmin(np.abs(E_grid - E0))] for rpm in rpms])
@@ -150,20 +152,18 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                 y = 1.0 / np.abs(j_at_E[mask])
                 x = inv_sqrt_omega[mask]
 
-                # eligibility: high-rpm current near plateau and good KL linearity
-                idx_E = int(np.argmin(np.abs(E_grid - E0)))
-                near_plateau = np.abs(j_high[idx_E]) >= plateau_thresh
-                if near_plateau and (len(x) >= 3):
+                # Do KL analysis on all potentials
+                if len(x) >= 3:
                     A = np.vstack([x, np.ones_like(x)]).T
                     slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
                     y_pred = slope * x + intercept
                     ss_res = float(np.sum((y - y_pred) ** 2))
                     ss_tot = float(np.sum((y - float(np.mean(y))) ** 2))
                     r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
-                    if (r2 >= 0.95) and np.isfinite(slope) and (slope > 0) and np.isfinite(intercept) and (intercept != 0):
+                    if (r2 >= 0.90) and np.isfinite(slope) and (slope > 0) and np.isfinite(intercept) and (intercept != 0):
                         jk = 1.0 / intercept
                         kl_rows.extend(
-                            KLPoint(E_V=float(E0), inv_sqrt_omega_s05=float(xi), inv_j_cm2_A_inv=float(yi))
+                            KLPoint(E_V=float(E0), inv_sqrt_omega_s05=float(xi), inv_j_cm2_A_inv=float(yi), jk_A_cm2=float(jk))
                             for xi, yi in zip(x, y)
                         )
                         jk_vs_E.append((E0, jk))
@@ -171,7 +171,7 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
 
                 # KL slope S = 1/B; B = 0.62 n F D^(2/3) nu^(-1/6) C*
                 # Work on current density, so area cancels
-                if 'slope' in locals() and near_plateau and np.isfinite(slope) and (slope > 0):
+                if 'slope' in locals() and np.isfinite(slope) and (slope > 0):
                     B_val = 1.0 / float(slope)
                     denom = 0.62 * N_ELECTRONS * F_CONST * C_BULK_MOL_PER_CM3
                     if denom > 0 and (NU_CMS2 > 0):
@@ -184,6 +184,7 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                         "slope_1_over_B": float(slope),
                         "B_A_cm2_s05": float(B_val),
                         "D_KL_cm2_s": float(D_val),
+                        "R2": float(r2),
                     })
 
             if jk_vs_E:
@@ -218,8 +219,8 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                     figkl, axkl = plt.subplots(figsize=(5.4, 4.0))
                     axkl.plot(x, y, "o")
                     axkl.plot(x, slope * x + intercept, "-")
-                    axkl.set_xlabel("1/sqrt(omega) (s^0.5)")
-                    axkl.set_ylabel("1/j (cm^2 A^-1)")
+                    axkl.set_xlabel(r"$1/\sqrt{\omega}$ [s$^{1/2}$]")
+                    axkl.set_ylabel(r"$1/j$ [cm$^2$ A$^{-1}$]")
                     axkl.set_title(f"Koutecky-Levich at E = {E_mid:.3f} V")
                     beautify_axes(axkl)
                     report.record_figure(safe_save(figkl, "T3.3_KL_example.png"))
@@ -247,64 +248,77 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
 
                 if len(branch) >= 3:
                     branch["log10_jk"] = np.log10(np.abs(branch["j_k_A_cm2"]))
-                    candidates = [(0.03, 0.15), (0.02, 0.20), (0.02, 0.25), (0.015, 0.30), (0.01, 0.35)]
-                    best = None
-                    for eta_min, eta_max in candidates:
-                        selected = (np.abs(branch["eta_V"]) >= eta_min) & (np.abs(branch["eta_V"]) <= eta_max)
-                        if selected.sum() >= 3:
-                            x = branch.loc[selected, "log10_jk"].to_numpy()
-                            y = branch.loc[selected, "eta_V"].to_numpy()
-                            A = np.vstack([x, np.ones_like(x)]).T
-                            slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
-                            y_pred = slope * x + intercept
-                            ss_res = np.sum((y - y_pred) ** 2)
-                            ss_tot = np.sum((y - np.mean(y)) ** 2)
-                            r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
-                            if best is None or r2 > best["r2"]:
-                                best = {
-                                    "eta_min": eta_min,
-                                    "eta_max": eta_max,
-                                    "slope": float(slope),
-                                    "intercept": float(intercept),
-                                    "r2": float(r2),
-                                    "x": x,
-                                    "y": y,
-                                }
-
-                    if best is None:
-                        selected = np.abs(branch["eta_V"]) >= 0.02
-                        if selected.sum() >= 3:
-                            x = branch.loc[selected, "log10_jk"].to_numpy()
-                            y = branch.loc[selected, "eta_V"].to_numpy()
-                            A = np.vstack([x, np.ones_like(x)]).T
-                            slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
-                            y_pred = slope * x + intercept
-                            ss_res = np.sum((y - y_pred) ** 2)
-                            ss_tot = np.sum((y - np.mean(y)) ** 2)
-                            r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
-                            best = {
-                                "eta_min": 0.02,
-                                "eta_max": float(np.abs(branch["eta_V"]).max()),
-                                "slope": float(slope),
-                                "intercept": float(intercept),
-                                "r2": float(r2),
-                                "x": x,
-                                "y": y,
-                            }
+                    
+                    # Select points in the log10(|jk|) range -2.5 to -1.35
+                    selected = (branch["log10_jk"] >= -2.5) & (branch["log10_jk"] <= -1.35)
+                    
+                    if selected.sum() >= 3:
+                        x = branch.loc[selected, "log10_jk"].to_numpy()
+                        y = branch.loc[selected, "eta_V"].to_numpy()
+                        A = np.vstack([x, np.ones_like(x)]).T
+                        slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
+                        y_pred = slope * x + intercept
+                        ss_res = np.sum((y - y_pred) ** 2)
+                        ss_tot = np.sum((y - np.mean(y)) ** 2)
+                        r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+                        best = {
+                            "log10_jk_min": -2.5,
+                            "log10_jk_max": -1.35,
+                            "slope": float(slope),
+                            "intercept": float(intercept),
+                            "r2": float(r2),
+                            "x": x,
+                            "y": y,
+                            "n_points": len(x),
+                        }
+                    else:
+                        # Fallback: use all points if not enough in target range
+                        x = branch["log10_jk"].to_numpy()
+                        y = branch["eta_V"].to_numpy()
+                        A = np.vstack([x, np.ones_like(x)]).T
+                        slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
+                        y_pred = slope * x + intercept
+                        ss_res = np.sum((y - y_pred) ** 2)
+                        ss_tot = np.sum((y - np.mean(y)) ** 2)
+                        r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+                        best = {
+                            "log10_jk_min": float(branch["log10_jk"].min()),
+                            "log10_jk_max": float(branch["log10_jk"].max()),
+                            "slope": float(slope),
+                            "intercept": float(intercept),
+                            "r2": float(r2),
+                            "x": x,
+                            "y": y,
+                            "n_points": len(x),
+                        }
 
                     if best is not None:
                         log10_j0 = -best["intercept"] / best["slope"]
                         j0 = 10 ** log10_j0
 
                         figtf, axtf = plt.subplots(figsize=(5.4, 4.0))
-                        axtf.plot(best["x"], best["y"], "o", label="data")
-                        xfit = np.linspace(np.min(best["x"]), np.max(best["x"]), 100)
-                        axtf.plot(xfit, best["slope"] * xfit + best["intercept"], "-", label=f"fit; R^2={best['r2']:.2f}; j0~{j0:.2e} A/cm^2")
-                        axtf.set_xlabel("log10(|j_k| / A cm^-2)")
-                        axtf.set_ylabel("eta (V)")
-                        axtf.set_title("Task 3.3 - Tafel from kinetic currents")
+                        
+                        # Plot all points in gray
+                        axtf.plot(branch["log10_jk"], branch["eta_V"], "o", color="lightgray", alpha=0.6, label=f"All Data ({len(branch)} points)")
+                        
+                        # Highlight selected points used for fitting
+                        axtf.plot(best["x"], best["y"], "o", color="blue", label=f"Selected for Fit ({best['n_points']} points)")
+                        
+                        # Extend fit line across the whole plot, at least to j0 intercept
+                        xlim = axtf.get_xlim()
+                        x_intersect = -best["intercept"] / best["slope"]  # When η=0
+                        x_min = min(xlim[0], x_intersect - 0.1)  # Extend left to include j0
+                        xfit = np.linspace(x_min, xlim[1], 100)
+                        axtf.plot(xfit, best["slope"] * xfit + best["intercept"], "-", color="red", label=f"Fit (R²={best['r2']:.3f})")
+                        
+                        # Calculate intersection with y-axis (η=0)
+                        x_intersect = -best["intercept"] / best["slope"]  # When η=0
+                        axtf.plot(x_intersect, 0, "ro", markersize=8, label=f"j₀: {j0:.2e} A/cm²")
+                        
+                        axtf.set_xlabel(r"log$_{10}$(|j$_k$|) [A cm$^{-2}$]")
+                        axtf.set_ylabel(r"$\eta$ [V]")
                         beautify_axes(axtf)
-                        axtf.legend(title="Data and fit", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
+                        axtf.legend(loc="upper right", fontsize=8)
                         report.record_figure(safe_save(figtf, "T3.3_Tafel.png"))
 
                         # Also estimate k0 from Tafel j0 if PEIS is not available later (fallback)
@@ -320,8 +334,10 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                                         "k0_app_cm_s": [float(k0_app)],
                                         "R2": [best["r2"]],
                                         "branch_sign": [int(sign_to_use)],
-                                        "eta_min_V": [best["eta_min"]],
-                                        "eta_max_V": [best["eta_max"]],
+                                        "log10_jk_min": [best["log10_jk_min"]],
+                                        "log10_jk_max": [best["log10_jk_max"]],
+                                        "n_points_used": [best["n_points"]],
+                                        "n_points_total": [len(branch)],
                                     }
                                 ),
                                 "T3.3_Tafel_fit.csv",
@@ -442,7 +458,6 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                 mask_model = np.isfinite(z_model.real) & np.isfinite(z_model.imag)
                 if mask_model.any():
                     z_fit_plot = z_model[mask_model]
-                    ax.plot(z_fit_plot.real, -z_fit_plot.imag, lw=1.2, alpha=0.9, label=f"{label} (fit)")
 
             fig_debug, ax_debug = plt.subplots(figsize=(5.0, 4.0))
             ax_debug.plot(z_re, z_im, 'o', ms=3, label='data')
@@ -460,13 +475,12 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
             debug_dir = Path("results/debugplots")
             debug_dir.mkdir(exist_ok=True, parents=True)
             debug_path = debug_dir / f"debug_PEIS_fit_{label_from_filename(path)}.png"
-            fig_debug.savefig(debug_path, dpi=150, bbox_inches="tight")
+            fig_debug.savefig(debug_path, dpi=300, bbox_inches="tight", format='png', facecolor="white")
             plt.close(fig_debug)
             report.record_figure(debug_path)
 
-        ax.set_xlabel("Z' (ohm cm^2)")
-        ax.set_ylabel("-Z'' (ohm cm^2)")
-        ax.set_title("Task 3.3 - PEIS Nyquist (area-normalized)")
+        ax.set_xlabel(r"Z' [Ω cm$^2$]")
+        ax.set_ylabel(r"-Z'' [Ω cm$^2$]")
         ax.legend(title="Rotation rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
         beautify_axes(ax)
         ax.set_aspect("equal", adjustable="box")

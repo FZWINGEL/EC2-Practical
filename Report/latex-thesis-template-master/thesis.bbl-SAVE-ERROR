@@ -19,1028 +19,179 @@
 
 \refsection{0}
   \datalist[entry]{none/global//global/global}
-    \entry{prohygen}{article}{}
+    \entry{Goodenough2013}{article}{}
       \name{author}{2}{}{%
-        {{hash=c099636a1cb2be4983449daa4aea4651}{%
-           family={Fluid\bibnamedelima Dynamics},
-           familyi={F\bibinitperiod\bibinitdelim D\bibinitperiod},
-           given={Institute},
-           giveni={I\bibinitperiod},
-           prefix={for},
-           prefixi={f\bibinitperiod}}}%
-        {{hash=0d99db9c4bbac8002a2bd30ab0d9c330}{%
-           family={Hamburg},
-           familyi={H\bibinitperiod},
-           given={Ship\bibnamedelimb Theory\bibnamedelima TU},
-           giveni={S\bibinitperiod\bibinitdelim T\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{hash=f08856e16c7fe3ea3fd8c48afdc541bd}{%
+           family={Goodenough},
+           familyi={G\bibinitperiod},
+           given={J.\bibnamedelimi B.},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=b4ec05f9b6ba65ce450a0115886f0f3b}{%
+           family={Park},
+           familyi={P\bibinitperiod},
+           given={K.-S.},
+           giveni={K\bibinithyphendelim S\bibinitperiod}}}%
       }
-      \strng{namehash}{1e08d57db735f27725d7203f96800cd2}
-      \strng{fullhash}{1e08d57db735f27725d7203f96800cd2}
-      \strng{bibnamehash}{1e08d57db735f27725d7203f96800cd2}
-      \strng{authorbibnamehash}{1e08d57db735f27725d7203f96800cd2}
-      \strng{authornamehash}{1e08d57db735f27725d7203f96800cd2}
-      \strng{authorfullhash}{1e08d57db735f27725d7203f96800cd2}
+      \strng{namehash}{21ecc556d54fc77d4a12d7d34119b023}
+      \strng{fullhash}{21ecc556d54fc77d4a12d7d34119b023}
+      \strng{bibnamehash}{21ecc556d54fc77d4a12d7d34119b023}
+      \strng{authorbibnamehash}{21ecc556d54fc77d4a12d7d34119b023}
+      \strng{authornamehash}{21ecc556d54fc77d4a12d7d34119b023}
+      \strng{authorfullhash}{21ecc556d54fc77d4a12d7d34119b023}
       \field{sortinit}{1}
       \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{title}{ProHyGen project page}
-      \field{urlday}{28}
-      \field{urlmonth}{6}
-      \field{urlyear}{2024}
-      \field{urldateera}{ce}
+      \field{journaltitle}{Journal of the American Chemical Society}
+      \field{number}{4}
+      \field{title}{The Li-Ion Rechargeable Battery: A Perspective}
+      \field{volume}{135}
+      \field{year}{2013}
+      \field{pages}{1167\bibrangedash 1176}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1021/ja3091438
+      \endverb
       \verb{urlraw}
-      \verb https://www.tuhh.de/fds/research/current/modular-ship-assist-1
+      \verb https://pubs.acs.org/doi/10.1021/ja3091438
       \endverb
       \verb{url}
-      \verb https://www.tuhh.de/fds/research/current/modular-ship-assist-1
+      \verb https://pubs.acs.org/doi/10.1021/ja3091438
       \endverb
     \endentry
-    \entry{Teichmann2011}{article}{}
-      \name{author}{4}{}{%
-        {{hash=2e7e98d3eb107d997c24dcd47c4bd11b}{%
-           family={Teichmann},
-           familyi={T\bibinitperiod},
-           given={D.},
-           giveni={D\bibinitperiod}}}%
-        {{hash=f5a2eadfb11e8c11359e2faba9255c4f}{%
-           family={Arlt},
-           familyi={A\bibinitperiod},
-           given={W.},
-           giveni={W\bibinitperiod}}}%
-        {{hash=7f790faa2871b238df28e0608c0848af}{%
-           family={Wasserscheid},
-           familyi={W\bibinitperiod},
-           given={P.},
-           giveni={P\bibinitperiod}}}%
-        {{hash=bb5278f4dae4e87daa6e0363f9ff3977}{%
-           family={Freymann},
-           familyi={F\bibinitperiod},
-           given={R.},
+    \entry{VanNoorden2014}{article}{}
+      \name{author}{1}{}{%
+        {{hash=8189b3b1448a1a25cc8d3ca8c5bcef68}{%
+           family={Van\bibnamedelima Noorden},
+           familyi={V\bibinitperiod\bibinitdelim N\bibinitperiod},
+           given={Richard},
            giveni={R\bibinitperiod}}}%
       }
-      \strng{namehash}{60481488c312c8950f2a0947bc409426}
-      \strng{fullhash}{60481488c312c8950f2a0947bc409426}
-      \strng{bibnamehash}{60481488c312c8950f2a0947bc409426}
-      \strng{authorbibnamehash}{60481488c312c8950f2a0947bc409426}
-      \strng{authornamehash}{60481488c312c8950f2a0947bc409426}
-      \strng{authorfullhash}{60481488c312c8950f2a0947bc409426}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \strng{namehash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \strng{fullhash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \strng{bibnamehash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \strng{authorbibnamehash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \strng{authornamehash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \strng{authorfullhash}{8189b3b1448a1a25cc8d3ca8c5bcef68}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{journaltitle}{Energy \& Environmental Science}
-      \field{number}{8}
-      \field{title}{A future energy supply based on Liquid Organic Hydrogen Carriers (LOHC)}
-      \field{volume}{4}
-      \field{year}{2011}
-      \field{pages}{2767\bibrangedash 2773}
-      \range{pages}{7}
+      \field{journaltitle}{Nature}
+      \field{note}{Request PDF: \url{https://www.researchgate.net/publication/260562281_The_rechargeable_revolution_A_better_battery}}
+      \field{number}{7490}
+      \field{title}{The rechargeable revolution: A better battery}
+      \field{volume}{507}
+      \field{year}{2014}
+      \field{pages}{26\bibrangedash 28}
+      \range{pages}{3}
       \verb{doi}
-      \verb 10.1039/C1EE01454D
+      \verb 10.1038/507026a
+      \endverb
+      \verb{urlraw}
+      \verb https://www.nature.com/articles/507026a
+      \endverb
+      \verb{url}
+      \verb https://www.nature.com/articles/507026a
       \endverb
     \endentry
-    \entry{Preuster2017}{article}{}
-      \name{author}{3}{}{%
-        {{hash=a23316fd42040941195cf69017750269}{%
-           family={Preuster},
-           familyi={P\bibinitperiod},
-           given={P.},
-           giveni={P\bibinitperiod}}}%
-        {{hash=67b4748c71921930241dbf87f0e05806}{%
-           family={Papp},
-           familyi={P\bibinitperiod},
-           given={C.},
-           giveni={C\bibinitperiod}}}%
-        {{hash=7f790faa2871b238df28e0608c0848af}{%
-           family={Wasserscheid},
-           familyi={W\bibinitperiod},
-           given={P.},
-           giveni={P\bibinitperiod}}}%
+    \entry{Elgrishi2018}{article}{}
+      \name{author}{6}{}{%
+        {{hash=5cef01167f0f70263d505cecf9681a20}{%
+           family={Elgrishi},
+           familyi={E\bibinitperiod},
+           given={Nicolas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=213ab5c5f1893b6bc85cd0918d4461fc}{%
+           family={Rountree},
+           familyi={R\bibinitperiod},
+           given={Katherine\bibnamedelima J.},
+           giveni={K\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=986d6032557ae24881810dc03ae03f2f}{%
+           family={McCarthy},
+           familyi={M\bibinitperiod},
+           given={Benjamin\bibnamedelima D.},
+           giveni={B\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=bfe558892b6683026936ef6cbf597def}{%
+           family={Rountree},
+           familyi={R\bibinitperiod},
+           given={Emilia\bibnamedelima S.},
+           giveni={E\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=2ef5549938877348314ce1d4dca23b7a}{%
+           family={Eisenhart},
+           familyi={E\bibinitperiod},
+           given={Timothy\bibnamedelima T.},
+           giveni={T\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{hash=ecf7649b76f4ae4d78f095b8e2a3e6ad}{%
+           family={Dempsey},
+           familyi={D\bibinitperiod},
+           given={Jillian\bibnamedelima L.},
+           giveni={J\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
       }
-      \strng{namehash}{427ccd4c02bf04f79b024bc653f830f8}
-      \strng{fullhash}{427ccd4c02bf04f79b024bc653f830f8}
-      \strng{bibnamehash}{427ccd4c02bf04f79b024bc653f830f8}
-      \strng{authorbibnamehash}{427ccd4c02bf04f79b024bc653f830f8}
-      \strng{authornamehash}{427ccd4c02bf04f79b024bc653f830f8}
-      \strng{authorfullhash}{427ccd4c02bf04f79b024bc653f830f8}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{Accounts of Chemical Research}
-      \field{number}{1}
-      \field{title}{Liquid Organic Hydrogen Carriers (LOHCs): Toward a Hydrogen-free Hydrogen Economy}
-      \field{volume}{50}
-      \field{year}{2017}
-      \field{pages}{74\bibrangedash 85}
-      \range{pages}{12}
-      \verb{doi}
-      \verb 10.1021/acs.accounts.6b00474
-      \endverb
-    \endentry
-    \entry{Niermann2019}{article}{}
-      \name{author}{4}{}{%
-        {{hash=1f02f58617be837c99a534752a3728df}{%
-           family={Niermann},
-           familyi={N\bibinitperiod},
-           given={Matthias},
-           giveni={M\bibinitperiod}}}%
-        {{hash=60f4024a21f15cd9f2cb0a95522404ec}{%
-           family={Beckendorff},
-           familyi={B\bibinitperiod},
-           given={Alexander},
-           giveni={A\bibinitperiod}}}%
-        {{hash=5b899f6db00e06c641a40cb64a5d27b9}{%
-           family={Kaltschmitt},
-           familyi={K\bibinitperiod},
-           given={Martin},
-           giveni={M\bibinitperiod}}}%
-        {{hash=f2c55a423bfdee966ee6b023e74a81dc}{%
-           family={Bonhoff},
-           familyi={B\bibinitperiod},
-           given={Klaus},
-           giveni={K\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier BV}%
-      }
-      \strng{namehash}{943001a8a82d4c04c5a12b6c303a599d}
-      \strng{fullhash}{943001a8a82d4c04c5a12b6c303a599d}
-      \strng{bibnamehash}{943001a8a82d4c04c5a12b6c303a599d}
-      \strng{authorbibnamehash}{943001a8a82d4c04c5a12b6c303a599d}
-      \strng{authornamehash}{943001a8a82d4c04c5a12b6c303a599d}
-      \strng{authorfullhash}{943001a8a82d4c04c5a12b6c303a599d}
+      \strng{namehash}{289322486f8368d165668ca911119924}
+      \strng{fullhash}{289322486f8368d165668ca911119924}
+      \strng{bibnamehash}{289322486f8368d165668ca911119924}
+      \strng{authorbibnamehash}{289322486f8368d165668ca911119924}
+      \strng{authornamehash}{289322486f8368d165668ca911119924}
+      \strng{authorfullhash}{289322486f8368d165668ca911119924}
       \field{sortinit}{7}
       \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{issn}{0360-3199}
-      \field{journaltitle}{International Journal of Hydrogen Energy}
-      \field{month}{3}
-      \field{number}{13}
-      \field{title}{Liquid Organic Hydrogen Carrier (LOHC) – Assessment based on chemical and economic properties}
-      \field{volume}{44}
-      \field{year}{2019}
-      \field{pages}{6631\bibrangedash 6654}
-      \range{pages}{24}
-      \verb{doi}
-      \verb 10.1016/j.ijhydene.2019.01.199
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2019.01.199
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2019.01.199
-      \endverb
-    \endentry
-    \entry{Manwell2009}{article}{}
-      \name{author}{3}{}{%
-        {{hash=efadb0a48c263e0f164963fea7f0ccc7}{%
-           family={Manwell},
-           familyi={M\bibinitperiod},
-           given={J.\bibnamedelimi F.},
-           giveni={J\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
-        {{hash=0f0ee346acbba47a5a732e557c8a5e89}{%
-           family={McGowan},
-           familyi={M\bibinitperiod},
-           given={J.\bibnamedelimi G.},
-           giveni={J\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
-        {{hash=851262658aaae9877b5a78baa1864be6}{%
-           family={Rogers},
-           familyi={R\bibinitperiod},
-           given={A.\bibnamedelimi L.},
-           giveni={A\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {John Wiley & Sons, Ltd}%
-      }
-      \strng{namehash}{95d29e67b4641001de1c83498504aa77}
-      \strng{fullhash}{95d29e67b4641001de1c83498504aa77}
-      \strng{bibnamehash}{95d29e67b4641001de1c83498504aa77}
-      \strng{authorbibnamehash}{95d29e67b4641001de1c83498504aa77}
-      \strng{authornamehash}{95d29e67b4641001de1c83498504aa77}
-      \strng{authorfullhash}{95d29e67b4641001de1c83498504aa77}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Wind Energy Explained: Theory, Design and Application, Second Edition}
-      \field{year}{2009}
-      \verb{doi}
-      \verb 10.1002/9781119994367
-      \endverb
-    \endentry
-    \entry{Al-Ahmar2008}{article}{}
-      \name{author}{4}{}{%
-        {{hash=7c27f54c6672bd82cf0952da606a7a43}{%
-           family={Al-Ahmar},
-           familyi={A\bibinithyphendelim A\bibinitperiod},
-           given={Elie},
-           giveni={E\bibinitperiod}}}%
-        {{hash=7fe80e647334bcc01f0c05245ec93e18}{%
-           family={Benbouzid},
-           familyi={B\bibinitperiod},
-           given={Mohamed},
-           giveni={M\bibinitperiod}}}%
-        {{hash=a0feaa7556a46e93a47162a085878cef}{%
-           family={Amirat},
-           familyi={A\bibinitperiod},
-           given={Yassine},
-           giveni={Y\bibinitperiod}}}%
-        {{hash=30726f03c007d525087eb862b70f4b80}{%
-           family={Benelghali},
-           familyi={B\bibinitperiod},
-           given={Seifeddine},
-           giveni={S\bibinitperiod}}}%
-      }
-      \strng{namehash}{94c1e999231a246d24eb9566b32a2157}
-      \strng{fullhash}{94c1e999231a246d24eb9566b32a2157}
-      \strng{bibnamehash}{94c1e999231a246d24eb9566b32a2157}
-      \strng{authorbibnamehash}{94c1e999231a246d24eb9566b32a2157}
-      \strng{authornamehash}{94c1e999231a246d24eb9566b32a2157}
-      \strng{authorfullhash}{94c1e999231a246d24eb9566b32a2157}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{Proceedings of the 2008 International Conference on Electrical Machines, ICEM'08}
-      \field{month}{10}
-      \field{title}{DFIG-Based Wind Turbine Fault Diagnosis Using a Specific Discrete Wavelet Transform}
-      \field{year}{2008}
-      \field{pages}{1\bibrangedash 6}
-      \range{pages}{6}
-      \verb{doi}
-      \verb 10.1109/ICELMACH.2008.4800033
-      \endverb
-    \endentry
-    \entry{LatticeFigure}{article}{}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labeltitlesource}{title}
-      \field{title}{Lattice Wind Tower}
-      \verb{urlraw}
-      \verb https://en.wind-turbine-models.com/turbines/212-vestas-v17-75-lattice?picture=AlbjtKaNHWl
-      \endverb
-      \verb{url}
-      \verb https://en.wind-turbine-models.com/turbines/212-vestas-v17-75-lattice?picture=AlbjtKaNHWl
-      \endverb
-    \endentry
-    \entry{TubularFigure}{article}{}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labeltitlesource}{title}
-      \field{title}{Tubular Wind Tower}
-      \verb{urlraw}
-      \verb https://en.wind-turbine-models.com/turbines/1892-siemens-gamesa-sg-3.4-132?picture=Q2ZjtgNDFz2
-      \endverb
-      \verb{url}
-      \verb https://en.wind-turbine-models.com/turbines/1892-siemens-gamesa-sg-3.4-132?picture=Q2ZjtgNDFz2
-      \endverb
-    \endentry
-    \entry{WARD2023}{article}{}
-      \name{author}{4}{}{%
-        {{hash=448741a9c5054f06924d45563ba8d2ad}{%
-           family={Ward},
-           familyi={W\bibinitperiod},
-           given={Kate},
-           giveni={K\bibinitperiod}}}%
-        {{hash=bd33dff6f7d26907f54ce7863f134eed}{%
-           family={Bamisile},
-           familyi={B\bibinitperiod},
-           given={Olusola},
-           giveni={O\bibinitperiod}}}%
-        {{hash=2e74b73574d5363f11c2a2781a2464a7}{%
-           family={Ejiyi},
-           familyi={E\bibinitperiod},
-           given={Chukwuebuka},
-           giveni={C\bibinitperiod}}}%
-        {{hash=f423668ec907764acad83154cc902312}{%
-           family={Staffell},
-           familyi={S\bibinitperiod},
-           given={Iain},
-           giveni={I\bibinitperiod}}}%
-      }
-      \strng{namehash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \strng{fullhash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \strng{bibnamehash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \strng{authorbibnamehash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \strng{authornamehash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \strng{authorfullhash}{00dbb1f03d1495ade2cce9b57c5bf9d4}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{Energy Strategy Reviews}
-      \field{title}{Time-averaged wind power data hides variability critical to renewables integration}
-      \field{volume}{50}
-      \field{year}{2023}
-      \field{pages}{101235}
-      \range{pages}{1}
-      \verb{doi}
-      \verb https://doi.org/10.1016/j.esr.2023.101235
-      \endverb
-      \verb{urlraw}
-      \verb https://www.sciencedirect.com/science/article/pii/S2211467X23001852
-      \endverb
-      \verb{url}
-      \verb https://www.sciencedirect.com/science/article/pii/S2211467X23001852
-      \endverb
-      \keyw{Wind power,Intermittency,Electrolyser,Power to gas,Sector coupling}
-    \endentry
-    \entry{MOHAMMADI2018632}{article}{}
-      \name{author}{2}{}{%
-        {{hash=fbeaba7da30eac1acb97235c62ddb075}{%
-           family={Mohammadi},
-           familyi={M\bibinitperiod},
-           given={Amin},
-           giveni={A\bibinitperiod}}}%
-        {{hash=f26dba4d053a6ef3c27f778804244c3d}{%
-           family={Mehrpooya},
-           familyi={M\bibinitperiod},
-           given={Mehdi},
-           giveni={M\bibinitperiod}}}%
-      }
-      \strng{namehash}{15d1600479fb14500a5f7910952bbf28}
-      \strng{fullhash}{15d1600479fb14500a5f7910952bbf28}
-      \strng{bibnamehash}{15d1600479fb14500a5f7910952bbf28}
-      \strng{authorbibnamehash}{15d1600479fb14500a5f7910952bbf28}
-      \strng{authornamehash}{15d1600479fb14500a5f7910952bbf28}
-      \strng{authorfullhash}{15d1600479fb14500a5f7910952bbf28}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0360-5442}
-      \field{journaltitle}{Energy}
-      \field{title}{A comprehensive review on coupling different types of electrolyzer to renewable energy sources}
-      \field{volume}{158}
+      \field{journaltitle}{Journal of Chemical Education}
+      \field{number}{2}
+      \field{title}{A Practical Beginner’s Guide to Cyclic Voltammetry}
+      \field{volume}{95}
       \field{year}{2018}
-      \field{pages}{632\bibrangedash 655}
-      \range{pages}{24}
-      \verb{doi}
-      \verb https://doi.org/10.1016/j.energy.2018.06.073
-      \endverb
-      \verb{urlraw}
-      \verb https://www.sciencedirect.com/science/article/pii/S0360544218311381
-      \endverb
-      \verb{url}
-      \verb https://www.sciencedirect.com/science/article/pii/S0360544218311381
-      \endverb
-      \keyw{Hydrogen production,Electrolyzer,Renewable energy,Coupling strategies,Economic analysis}
-    \endentry
-    \entry{BUTTLER20182440}{article}{}
-      \name{author}{2}{}{%
-        {{hash=116f785f0a0b7c1624f226831b26fe7e}{%
-           family={Buttler},
-           familyi={B\bibinitperiod},
-           given={Alexander},
-           giveni={A\bibinitperiod}}}%
-        {{hash=3e59c2d777bca2e0619685c59ccd0edd}{%
-           family={Spliethoff},
-           familyi={S\bibinitperiod},
-           given={Hartmut},
-           giveni={H\bibinitperiod}}}%
-      }
-      \strng{namehash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \strng{fullhash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \strng{bibnamehash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \strng{authorbibnamehash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \strng{authornamehash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \strng{authorfullhash}{f5ad6ff46b8c0f7345ae4f65db4c831f}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{1364-0321}
-      \field{journaltitle}{Renewable and Sustainable Energy Reviews}
-      \field{title}{Current status of water electrolysis for energy storage, grid balancing and sector coupling via power-to-gas and power-to-liquids: A review}
-      \field{volume}{82}
-      \field{year}{2018}
-      \field{pages}{2440\bibrangedash 2454}
-      \range{pages}{15}
-      \verb{doi}
-      \verb https://doi.org/10.1016/j.rser.2017.09.003
-      \endverb
-      \verb{urlraw}
-      \verb https://www.sciencedirect.com/science/article/pii/S136403211731242X
-      \endverb
-      \verb{url}
-      \verb https://www.sciencedirect.com/science/article/pii/S136403211731242X
-      \endverb
-      \keyw{Alkaline electrolysis,PEM electrolysis,SOEC,Energy storage,Market survey,Investment costs,System performance}
-    \endentry
-    \entry{ShivaKumar2019}{article}{}
-      \name{author}{2}{}{%
-        {{hash=8019c3f49f26fa5ee9ffcd6b9b3b9d20}{%
-           family={Shiva\bibnamedelima Kumar},
-           familyi={S\bibinitperiod\bibinitdelim K\bibinitperiod},
-           given={S.},
-           giveni={S\bibinitperiod}}}%
-        {{hash=c88969d551214fd219748976af249a9a}{%
-           family={Himabindu},
-           familyi={H\bibinitperiod},
-           given={V.},
-           giveni={V\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier BV}%
-      }
-      \strng{namehash}{988f1ccbf371a5023790406f1c4db445}
-      \strng{fullhash}{988f1ccbf371a5023790406f1c4db445}
-      \strng{bibnamehash}{988f1ccbf371a5023790406f1c4db445}
-      \strng{authorbibnamehash}{988f1ccbf371a5023790406f1c4db445}
-      \strng{authornamehash}{988f1ccbf371a5023790406f1c4db445}
-      \strng{authorfullhash}{988f1ccbf371a5023790406f1c4db445}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{2589-2991}
-      \field{journaltitle}{Materials Science for Energy Technologies}
-      \field{month}{12}
-      \field{number}{3}
-      \field{title}{Hydrogen production by PEM water electrolysis – A review}
-      \field{volume}{2}
-      \field{year}{2019}
-      \field{pages}{442\bibrangedash 454}
-      \range{pages}{13}
-      \verb{doi}
-      \verb 10.1016/j.mset.2019.03.002
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1016/j.mset.2019.03.002
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1016/j.mset.2019.03.002
-      \endverb
-    \endentry
-    \entry{AbdolRahim2016}{article}{}
-      \name{author}{4}{}{%
-        {{hash=848d30d354a6608a5aa02b086e21112f}{%
-           family={Abdol\bibnamedelima Rahim},
-           familyi={A\bibinitperiod\bibinitdelim R\bibinitperiod},
-           given={A.H.},
-           giveni={A\bibinitperiod}}}%
-        {{hash=1b998aa5b03f98f4b1a7ef68947e6be4}{%
-           family={Tijani},
-           familyi={T\bibinitperiod},
-           given={Alhassan\bibnamedelima Salami},
-           giveni={A\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
-        {{hash=110537056225b204dd25c738704390d8}{%
-           family={Kamarudin},
-           familyi={K\bibinitperiod},
-           given={S.K.},
-           giveni={S\bibinitperiod}}}%
-        {{hash=71fb8543b748db05dd1914b7a25f157a}{%
-           family={Hanapi},
-           familyi={H\bibinitperiod},
-           given={S.},
-           giveni={S\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier BV}%
-      }
-      \strng{namehash}{43a1f775d206785b7f8b9e284d1060e5}
-      \strng{fullhash}{43a1f775d206785b7f8b9e284d1060e5}
-      \strng{bibnamehash}{43a1f775d206785b7f8b9e284d1060e5}
-      \strng{authorbibnamehash}{43a1f775d206785b7f8b9e284d1060e5}
-      \strng{authornamehash}{43a1f775d206785b7f8b9e284d1060e5}
-      \strng{authorfullhash}{43a1f775d206785b7f8b9e284d1060e5}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0378-7753}
-      \field{journaltitle}{Journal of Power Sources}
-      \field{month}{3}
-      \field{title}{An overview of polymer electrolyte membrane electrolyzer for hydrogen production: Modeling and mass transport}
-      \field{volume}{309}
-      \field{year}{2016}
-      \field{pages}{56\bibrangedash 65}
+      \field{pages}{197\bibrangedash 206}
       \range{pages}{10}
       \verb{doi}
-      \verb 10.1016/j.jpowsour.2016.01.012
+      \verb 10.1021/acs.jchemed.7b00361
       \endverb
       \verb{urlraw}
-      \verb http://dx.doi.org/10.1016/j.jpowsour.2016.01.012
+      \verb https://doi.org/10.1021/acs.jchemed.7b00361
       \endverb
       \verb{url}
-      \verb http://dx.doi.org/10.1016/j.jpowsour.2016.01.012
+      \verb https://doi.org/10.1021/acs.jchemed.7b00361
       \endverb
     \endentry
-    \entry{Carmo2013}{article}{}
-      \name{author}{4}{}{%
-        {{hash=5cb00422350f2f49fb84bfa63612d043}{%
-           family={Carmo},
-           familyi={C\bibinitperiod},
-           given={Marcelo},
-           giveni={M\bibinitperiod}}}%
-        {{hash=a58e4d85b82d1c1cbf3227df8f015e7f}{%
-           family={Fritz},
-           familyi={F\bibinitperiod},
-           given={David\bibnamedelima L.},
-           giveni={D\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
-        {{hash=7b4ea7f032a55437297a56d45ef38593}{%
-           family={Mergel},
-           familyi={M\bibinitperiod},
-           given={Jürgen},
-           giveni={J\bibinitperiod}}}%
-        {{hash=fcb017aa00b2d8a14aedfe47f774dda4}{%
-           family={Stolten},
-           familyi={S\bibinitperiod},
-           given={Detlef},
-           giveni={D\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier BV}%
-      }
-      \strng{namehash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \strng{fullhash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \strng{bibnamehash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \strng{authorbibnamehash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \strng{authornamehash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \strng{authorfullhash}{c90eb1bb8a808f1cb40fb8940cd53313}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0360-3199}
-      \field{journaltitle}{International Journal of Hydrogen Energy}
-      \field{month}{4}
-      \field{number}{12}
-      \field{title}{A comprehensive review on PEM water electrolysis}
-      \field{volume}{38}
-      \field{year}{2013}
-      \field{pages}{4901\bibrangedash 4934}
-      \range{pages}{34}
-      \verb{doi}
-      \verb 10.1016/j.ijhydene.2013.01.151
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2013.01.151
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2013.01.151
-      \endverb
-    \endentry
-    \entry{Bodner2014}{article}{}
-      \name{author}{3}{}{%
-        {{hash=c719197739150516730329ed95a640d4}{%
-           family={Bodner},
-           familyi={B\bibinitperiod},
-           given={Merit},
-           giveni={M\bibinitperiod}}}%
-        {{hash=ca8e348f92eb8f22ef5035d0541ef0d6}{%
-           family={Hofer},
-           familyi={H\bibinitperiod},
-           given={Astrid},
-           giveni={A\bibinitperiod}}}%
-        {{hash=1d551fab425fa7c8d147759b402d5636}{%
-           family={Hacker},
-           familyi={H\bibinitperiod},
-           given={Viktor},
-           giveni={V\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Wiley}%
-      }
-      \strng{namehash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \strng{fullhash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \strng{bibnamehash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \strng{authorbibnamehash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \strng{authornamehash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \strng{authorfullhash}{753206fda42ea3a1d46fc4d7a628ab81}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{2041-840X}
-      \field{journaltitle}{WIREs Energy and Environment}
-      \field{month}{10}
-      \field{number}{4}
-      \field{title}{<scp>H2</scp> generation from alkaline electrolyzer}
-      \field{volume}{4}
-      \field{year}{2014}
-      \field{pages}{365\bibrangedash 381}
-      \range{pages}{17}
-      \verb{doi}
-      \verb 10.1002/wene.150
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1002/wene.150
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1002/wene.150
-      \endverb
-    \endentry
-    \entry{flask_doc}{article}{}
-      \name{author}{1}{}{%
-        {{hash=3f9cff795224f5232cca142b122d6d46}{%
-           family={{Pallets}},
-           familyi={P\bibinitperiod}}}%
-      }
-      \strng{namehash}{3f9cff795224f5232cca142b122d6d46}
-      \strng{fullhash}{3f9cff795224f5232cca142b122d6d46}
-      \strng{bibnamehash}{3f9cff795224f5232cca142b122d6d46}
-      \strng{authorbibnamehash}{3f9cff795224f5232cca142b122d6d46}
-      \strng{authornamehash}{3f9cff795224f5232cca142b122d6d46}
-      \strng{authorfullhash}{3f9cff795224f5232cca142b122d6d46}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Flask Documentation}
-      \field{urlday}{28}
-      \field{urlmonth}{6}
-      \field{urlyear}{2024}
-      \field{version}{3.0.x}
-      \field{year}{2024}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://flask.palletsprojects.com/en/3.0.x/
-      \endverb
-      \verb{url}
-      \verb https://flask.palletsprojects.com/en/3.0.x/
-      \endverb
-    \endentry
-    \entry{NREL}{article}{}
-      \name{author}{1}{}{%
-        {{hash=b008d1abdbee465a017da6e11d139e72}{%
-           family={Laboratory},
+    \entry{Lazanas2023}{article}{}
+      \name{author}{2}{}{%
+        {{hash=942ab1d3aba413666f5ed582c72ac4d9}{%
+           family={Lazanas},
            familyi={L\bibinitperiod},
-           given={National\bibnamedelimb Renewable\bibnamedelima Energy},
-           giveni={N\bibinitperiod\bibinitdelim R\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
+           given={A.\bibnamedelimi Ch.},
+           giveni={A\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=53f93754f070c07cbc4035638487bb84}{%
+           family={Prodromidis},
+           familyi={P\bibinitperiod},
+           given={M.\bibnamedelimi I.},
+           giveni={M\bibinitperiod\bibinitdelim I\bibinitperiod}}}%
       }
-      \strng{namehash}{b008d1abdbee465a017da6e11d139e72}
-      \strng{fullhash}{b008d1abdbee465a017da6e11d139e72}
-      \strng{bibnamehash}{b008d1abdbee465a017da6e11d139e72}
-      \strng{authorbibnamehash}{b008d1abdbee465a017da6e11d139e72}
-      \strng{authornamehash}{b008d1abdbee465a017da6e11d139e72}
-      \strng{authorfullhash}{b008d1abdbee465a017da6e11d139e72}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \strng{namehash}{628550856f918a6f63454426440beeeb}
+      \strng{fullhash}{628550856f918a6f63454426440beeeb}
+      \strng{bibnamehash}{628550856f918a6f63454426440beeeb}
+      \strng{authorbibnamehash}{628550856f918a6f63454426440beeeb}
+      \strng{authornamehash}{628550856f918a6f63454426440beeeb}
+      \strng{authorfullhash}{628550856f918a6f63454426440beeeb}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{title}{Wind Turbine Library}
-      \field{year}{2024}
-      \verb{urlraw}
-      \verb https://nrel.github.io/turbine-models/index.html
-      \endverb
-      \verb{url}
-      \verb https://nrel.github.io/turbine-models/index.html
-      \endverb
-    \endentry
-    \entry{Zippenfenig_Open-Meteo}{article}{}
-      \name{author}{1}{}{%
-        {{hash=a21855b37b026bdb2b21690260a55e71}{%
-           family={Zippenfenig},
-           familyi={Z\bibinitperiod},
-           given={Patrick},
-           giveni={P\bibinitperiod}}}%
-      }
-      \strng{namehash}{a21855b37b026bdb2b21690260a55e71}
-      \strng{fullhash}{a21855b37b026bdb2b21690260a55e71}
-      \strng{bibnamehash}{a21855b37b026bdb2b21690260a55e71}
-      \strng{authorbibnamehash}{a21855b37b026bdb2b21690260a55e71}
-      \strng{authornamehash}{a21855b37b026bdb2b21690260a55e71}
-      \strng{authorfullhash}{a21855b37b026bdb2b21690260a55e71}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Open-Meteo.com Weather API}
+      \field{journaltitle}{ACS Measurement Science Au}
+      \field{title}{Electrochemical Impedance Spectroscopy—A Tutorial}
+      \field{volume}{3}
       \field{year}{2023}
+      \field{pages}{162\bibrangedash 193}
+      \range{pages}{32}
       \verb{doi}
-      \verb 10.5281/zenodo.7970649
+      \verb 10.1021/acsmeasuresciau.2c00070
       \endverb
       \verb{urlraw}
-      \verb https://open-meteo.com/
+      \verb https://doi.org/10.1021/acsmeasuresciau.2c00070
       \endverb
       \verb{url}
-      \verb https://open-meteo.com/
-      \endverb
-    \endentry
-    \entry{windpowerlib}{article}{}
-      \name{author}{11}{}{%
-        {{hash=e08135bb1ff76bb0302393003cacf386}{%
-           family={Haas},
-           familyi={H\bibinitperiod},
-           given={Sabine},
-           giveni={S\bibinitperiod}}}%
-        {{hash=8ce438581c6be7438ae110d9a6902711}{%
-           family={Krien},
-           familyi={K\bibinitperiod},
-           given={Uwe},
-           giveni={U\bibinitperiod}}}%
-        {{hash=f538b3267d5fb668e1541ab139a8ecf4}{%
-           family={Schachler},
-           familyi={S\bibinitperiod},
-           given={Birgit},
-           giveni={B\bibinitperiod}}}%
-        {{hash=52dc10203cfa69d6f9bc233c78780e70}{%
-           family={Bot},
-           familyi={B\bibinitperiod},
-           given={Stickler},
-           giveni={S\bibinitperiod}}}%
-        {{hash=8136c81e8e5bdcfab3ad5839733813bb}{%
-           family={Zeli},
-           familyi={Z\bibinitperiod},
-           given={Velibor},
-           giveni={V\bibinitperiod}}}%
-        {{hash=bb32534d8256bc7711dae5d434795ed3}{%
-           family={Maurer},
-           familyi={M\bibinitperiod},
-           given={Florian},
-           giveni={F\bibinitperiod}}}%
-        {{hash=5b6480a5b720f5152cd01b851c0ca8b0}{%
-           family={Shivam},
-           familyi={S\bibinitperiod},
-           given={Kumar},
-           giveni={K\bibinitperiod}}}%
-        {{hash=16a2cb2a4e1eb25359f0951bfee3b0c9}{%
-           family={Witte},
-           familyi={W\bibinitperiod},
-           given={Francesco},
-           giveni={F\bibinitperiod}}}%
-        {{hash=80dc5643a16b11fc89136cce18a0d0ac}{%
-           family={Rasti},
-           familyi={R\bibinitperiod},
-           given={Sasan\bibnamedelima Jacob},
-           giveni={S\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
-        {{hash=b08c5a0f666c5f8a83a7bcafe51ec49b}{%
-           family={Seth},
-           familyi={S\bibinitperiod}}}%
-        {{hash=8516ee8b6579936d3129cb2f46b53ea2}{%
-           family={Bosch},
-           familyi={B\bibinitperiod},
-           given={Stephen},
-           giveni={S\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Zenodo}%
-      }
-      \strng{namehash}{195d903930332bf0dc9be0765f29dd99}
-      \strng{fullhash}{5625dc175a0f84225ec6981ba5cf07c6}
-      \strng{bibnamehash}{195d903930332bf0dc9be0765f29dd99}
-      \strng{authorbibnamehash}{195d903930332bf0dc9be0765f29dd99}
-      \strng{authornamehash}{195d903930332bf0dc9be0765f29dd99}
-      \strng{authorfullhash}{5625dc175a0f84225ec6981ba5cf07c6}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{wind-python/windpowerlib: Update release}
-      \field{year}{2024}
-      \verb{doi}
-      \verb 10.5281/ZENODO.10685057
-      \endverb
-      \verb{urlraw}
-      \verb https://zenodo.org/doi/10.5281/zenodo.10685057
-      \endverb
-      \verb{url}
-      \verb https://zenodo.org/doi/10.5281/zenodo.10685057
-      \endverb
-    \endentry
-    \entry{chart_js_doc}{article}{}
-      \name{author}{1}{}{%
-        {{hash=d85b7d270c7a29ee4d8b2b3c2f01cbe2}{%
-           family={{Chart.js}},
-           familyi={C\bibinitperiod}}}%
-      }
-      \strng{namehash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \strng{fullhash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \strng{bibnamehash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \strng{authorbibnamehash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \strng{authornamehash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \strng{authorfullhash}{d85b7d270c7a29ee4d8b2b3c2f01cbe2}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Chart.js Documentation}
-      \field{urlday}{28}
-      \field{urlmonth}{6}
-      \field{urlyear}{2024}
-      \field{year}{2024}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://www.chartjs.org/docs/latest/
-      \endverb
-      \verb{url}
-      \verb https://www.chartjs.org/docs/latest/
-      \endverb
-    \endentry
-    \entry{ERA5}{article}{}
-      \name{author}{1}{}{%
-        {{hash=014e5ba04dedb854a1d23ee28a17bf2f}{%
-           family={{C3S}},
-           familyi={C\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Copernicus Climate Change Service (C3S) Climate Data Store (CDS)}%
-      }
-      \strng{namehash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \strng{fullhash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \strng{bibnamehash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \strng{authorbibnamehash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \strng{authornamehash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \strng{authorfullhash}{014e5ba04dedb854a1d23ee28a17bf2f}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{ERA5 hourly data on single levels from 1940 to present}
-      \field{year}{2018}
-      \verb{doi}
-      \verb 10.24381/CDS.ADBB2D47
-      \endverb
-      \verb{urlraw}
-      \verb https://cds.climate.copernicus.eu/doi/10.24381/cds.adbb2d47
-      \endverb
-      \verb{url}
-      \verb https://cds.climate.copernicus.eu/doi/10.24381/cds.adbb2d47
-      \endverb
-    \endentry
-    \entry{Mainz}{article}{}
-      \name{author}{6}{}{%
-        {{hash=c809ea7737dbcaf11bf6a93a4fb2e559}{%
-           family={Kopp},
-           familyi={K\bibinitperiod},
-           given={M.},
-           giveni={M\bibinitperiod}}}%
-        {{hash=51c85c4da1f9ffa2151f54534e53b3a8}{%
-           family={Coleman},
-           familyi={C\bibinitperiod},
-           given={D.},
-           giveni={D\bibinitperiod}}}%
-        {{hash=9dee3559bb84e64b240c89d115d18779}{%
-           family={Stiller},
-           familyi={S\bibinitperiod},
-           given={C.},
-           giveni={C\bibinitperiod}}}%
-        {{hash=3f4b6b46ec08f136e05fa6e669e07fdc}{%
-           family={Scheffer},
-           familyi={S\bibinitperiod},
-           given={K.},
-           giveni={K\bibinitperiod}}}%
-        {{hash=7aef28709f1507f218056680d22b081e}{%
-           family={Aichinger},
-           familyi={A\bibinitperiod},
-           given={J.},
-           giveni={J\bibinitperiod}}}%
-        {{hash=6c00fac8813b83976750162ee695479e}{%
-           family={Scheppat},
-           familyi={S\bibinitperiod},
-           given={B.},
-           giveni={B\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier BV}%
-      }
-      \strng{namehash}{49a9b71d5e9df37818def0107f7a2294}
-      \strng{fullhash}{49a9b71d5e9df37818def0107f7a2294}
-      \strng{bibnamehash}{49a9b71d5e9df37818def0107f7a2294}
-      \strng{authorbibnamehash}{49a9b71d5e9df37818def0107f7a2294}
-      \strng{authornamehash}{49a9b71d5e9df37818def0107f7a2294}
-      \strng{authorfullhash}{49a9b71d5e9df37818def0107f7a2294}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0360-3199}
-      \field{journaltitle}{International Journal of Hydrogen Energy}
-      \field{month}{5}
-      \field{number}{19}
-      \field{title}{Energiepark Mainz: Technical and economic analysis of the worldwide largest Power-to-Gas plant with PEM electrolysis}
-      \field{volume}{42}
-      \field{year}{2017}
-      \field{pages}{13311\bibrangedash 13320}
-      \range{pages}{10}
-      \verb{doi}
-      \verb 10.1016/j.ijhydene.2016.12.145
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2016.12.145
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1016/j.ijhydene.2016.12.145
-      \endverb
-    \endentry
-    \entry{Fiji}{article}{}
-      \name{author}{16}{}{%
-        {{hash=ac82c7686cb5af1a978185f449f30702}{%
-           family={Schindelin},
-           familyi={S\bibinitperiod},
-           given={Johannes},
-           giveni={J\bibinitperiod}}}%
-        {{hash=fb4a9b4f8cb47f8bee748d32779b7d01}{%
-           family={Arganda-Carreras},
-           familyi={A\bibinithyphendelim C\bibinitperiod},
-           given={Ignacio},
-           giveni={I\bibinitperiod}}}%
-        {{hash=0a776e2acaca3da7f09464eed966703a}{%
-           family={Frise},
-           familyi={F\bibinitperiod},
-           given={Erwin},
-           giveni={E\bibinitperiod}}}%
-        {{hash=cf3458a8158dd8bcbccb1d9f3bae1444}{%
-           family={Kaynig},
-           familyi={K\bibinitperiod},
-           given={Verena},
-           giveni={V\bibinitperiod}}}%
-        {{hash=f8d350e633e669ecce76f53a255ca7e6}{%
-           family={Longair},
-           familyi={L\bibinitperiod},
-           given={Mark},
-           giveni={M\bibinitperiod}}}%
-        {{hash=74624b572b3fd665ada5f45e837b3fad}{%
-           family={Pietzsch},
-           familyi={P\bibinitperiod},
-           given={Tobias},
-           giveni={T\bibinitperiod}}}%
-        {{hash=52ebeccf5706d204d6ea2f00afdc0a82}{%
-           family={Preibisch},
-           familyi={P\bibinitperiod},
-           given={Stephan},
-           giveni={S\bibinitperiod}}}%
-        {{hash=1278dc454496030a575c2364261b643e}{%
-           family={Rueden},
-           familyi={R\bibinitperiod},
-           given={Curtis},
-           giveni={C\bibinitperiod}}}%
-        {{hash=e3100f88cc060bd3d2cc5fc5d24ea490}{%
-           family={Saalfeld},
-           familyi={S\bibinitperiod},
-           given={Stephan},
-           giveni={S\bibinitperiod}}}%
-        {{hash=21b481f5dff243098574c2319c707eef}{%
-           family={Schmid},
-           familyi={S\bibinitperiod},
-           given={Benjamin},
-           giveni={B\bibinitperiod}}}%
-        {{hash=51fcbf8611c8067bed3b33bf0f587c8e}{%
-           family={Tinevez},
-           familyi={T\bibinitperiod},
-           given={Jean-Yves},
-           giveni={J\bibinithyphendelim Y\bibinitperiod}}}%
-        {{hash=2cbf1102bb63abcf1e7de9007399d6cb}{%
-           family={White},
-           familyi={W\bibinitperiod},
-           given={Daniel\bibnamedelima James},
-           giveni={D\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
-        {{hash=6469e23f6e55008a8f1d6ad677777332}{%
-           family={Hartenstein},
-           familyi={H\bibinitperiod},
-           given={Volker},
-           giveni={V\bibinitperiod}}}%
-        {{hash=ab16022f9fa944777da25790f7620b79}{%
-           family={Eliceiri},
-           familyi={E\bibinitperiod},
-           given={Kevin},
-           giveni={K\bibinitperiod}}}%
-        {{hash=6166a3f540ffe514a2b0a8932f8fca1c}{%
-           family={Tomancak},
-           familyi={T\bibinitperiod},
-           given={Pavel},
-           giveni={P\bibinitperiod}}}%
-        {{hash=704fa1d6130928d88680f2323fd9ff84}{%
-           family={Cardona},
-           familyi={C\bibinitperiod},
-           given={Albert},
-           giveni={A\bibinitperiod}}}%
-      }
-      \list{publisher}{2}{%
-        {Springer Science}%
-        {Business Media LLC}%
-      }
-      \strng{namehash}{ad1bfba2c8792d8fa685fed6100cfb98}
-      \strng{fullhash}{15eb877bfd5e9b93ab284d7309220074}
-      \strng{bibnamehash}{ad1bfba2c8792d8fa685fed6100cfb98}
-      \strng{authorbibnamehash}{ad1bfba2c8792d8fa685fed6100cfb98}
-      \strng{authornamehash}{ad1bfba2c8792d8fa685fed6100cfb98}
-      \strng{authorfullhash}{15eb877bfd5e9b93ab284d7309220074}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{1548-7105}
-      \field{journaltitle}{Nature Methods}
-      \field{month}{6}
-      \field{number}{7}
-      \field{title}{Fiji: an open-source platform for biological-image analysis}
-      \field{volume}{9}
-      \field{year}{2012}
-      \field{pages}{676\bibrangedash 682}
-      \range{pages}{7}
-      \verb{doi}
-      \verb 10.1038/nmeth.2019
-      \endverb
-      \verb{urlraw}
-      \verb http://dx.doi.org/10.1038/nmeth.2019
-      \endverb
-      \verb{url}
-      \verb http://dx.doi.org/10.1038/nmeth.2019
+      \verb https://doi.org/10.1021/acsmeasuresciau.2c00070
       \endverb
     \endentry
   \enddatalist

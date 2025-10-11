@@ -602,7 +602,15 @@ def _extract_eis_parameters_both(df: pd.DataFrame) -> Tuple[float, float, float,
     return float(Rs_best), float(Rct_best), float(Cdl_best), float(f_peak), float(Rs_fit), float(Rct_fit)
 
 
-def _warburg_fit(df: pd.DataFrame) -> Tuple[float, float]:
+def _warburg_fit(df: pd.DataFrame) -> Tuple[float, float, float, float]:
+    """Estimate Warburg coefficient A_W from tail of 1/sqrt(omega) linearization and compute D.
+
+    Following Skript.md Eq. [3.3.2.1]:
+        A_W = 4 R T / (n^2 F^2 C_O^* D^{1/2})  =>  D = (4 R T / (n^2 F^2 C_O^* A_W))^2
+
+    We obtain A_W by performing a linear fit to the low-frequency 'Warburg tail' of both
+    Re(Z) and -Im(Z) vs 1/sqrt(omega) and averaging their slopes (when consistent).
+    """
     re_col = get_column(df, ["Re(Z)/Ohm"]) or "Re(Z)/Ohm"
     im_col = get_column(df, ["-Im(Z)/Ohm"]) or "-Im(Z)/Ohm"
     f_col = get_column(df, ["freq/Hz"]) or "freq/Hz"
@@ -612,19 +620,21 @@ def _warburg_fit(df: pd.DataFrame) -> Tuple[float, float]:
     omega = 2 * np.pi * f_hz
 
     mask = np.isfinite(z_re) & np.isfinite(z_im) & np.isfinite(omega) & (omega > 0)
-    z_re, z_im, omega = z_re[mask], z_im[mask], omega[mask]
-    if len(omega) == 0:
+    if not np.any(mask):
         return float("nan"), float("nan")
+    z_re = z_re[mask]
+    z_im = z_im[mask]
+    omega = omega[mask]
 
+    # Identify tail region (low frequency) and near-45° region
+    try:
+        lf_cut = np.quantile(omega, 0.35)
+    except Exception:
+        lf_cut = np.nanmin(omega)
     angle45 = np.abs(z_re - z_im) / np.maximum(1e-9, (np.abs(z_re) + np.abs(z_im))) < 0.20
-    lf_cut = np.quantile(omega, 0.35)
     sel = (omega <= lf_cut) & angle45
 
-    def _fit_slope(x_vals: np.ndarray, y_vals: np.ndarray) -> float:
-        A_loc = np.vstack([x_vals, np.ones_like(x_vals)]).T
-        slope_loc, _ = np.linalg.lstsq(A_loc, y_vals, rcond=None)[0]
-        return float(slope_loc)
-
+    # Fallback: take lowest 30% of frequency points if selection too small
     if sel.sum() < 5:
         order = np.argsort(omega)
         num = max(6, min(20, int(len(omega) * 0.30)))
@@ -636,21 +646,50 @@ def _warburg_fit(df: pd.DataFrame) -> Tuple[float, float]:
     y_re = z_re[idx]
     y_im = z_im[idx]
 
-    slope_re = _fit_slope(x, y_re) if len(x) >= 2 else float("nan")
-    slope_im = _fit_slope(x, y_im) if len(x) >= 2 else float("nan")
+    def fit_slope(x_vals: np.ndarray, y_vals: np.ndarray) -> float:
+        if len(x_vals) < 2:
+            return float("nan")
+        A_loc = np.vstack([x_vals, np.ones_like(x_vals)]).T
+        slope_loc, _ = np.linalg.lstsq(A_loc, y_vals, rcond=None)[0]
+        return float(slope_loc)
 
-    slopes = [s for s in [slope_re, slope_im] if np.isfinite(s) and s > 0]
-    if len(slopes) == 0:
-        return float("nan"), float("nan")
+    slope_re = fit_slope(x, y_re)
+    slope_im = fit_slope(x, y_im)
 
-    if len(slopes) == 2 and (max(slopes) / min(slopes) > 2.0):
-        Aw = float(min(slopes))
+    candidates = [s for s in [slope_re, slope_im] if np.isfinite(s) and s > 0]
+    if not candidates:
+        return float("nan"), float("nan"), float("nan"), float("nan")
+    if len(candidates) == 2 and (max(candidates) / min(candidates) > 2.0):
+        Aw = float(min(candidates))
     else:
-        Aw = float(np.mean(slopes))
+        Aw = float(np.mean(candidates))
 
-    D_half = (4.0 * R_GAS * T_K) / (((N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3) * Aw)
-    D_w = float(D_half ** 2) if np.isfinite(D_half) and D_half > 0 else float("nan")
-    return Aw, D_w
+    # Skript Eq. 3.3.2.1: A_W = 4RT / (n^2 F^2 C_O^* D^{1/2})
+    # => D = (4RT / (n^2 F^2 C* A_W))^2
+    const_num = 4.0 * R_GAS * T_K
+    
+    # Calculate D for averaged Aw
+    denom = (N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * Aw
+    if denom <= 0 or not np.isfinite(denom):
+        D_w = float("nan")
+    else:
+        D_half = const_num / denom
+        D_w = float(D_half ** 2) if np.isfinite(D_half) and D_half > 0 else float("nan")
+    
+    # Calculate D for individual slopes
+    def calc_d_from_aw(aw_val):
+        if not np.isfinite(aw_val) or aw_val <= 0:
+            return float("nan")
+        denom = (N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * aw_val
+        if denom <= 0:
+            return float("nan")
+        D_half = const_num / denom
+        return float(D_half ** 2) if np.isfinite(D_half) and D_half > 0 else float("nan")
+    
+    D_re = calc_d_from_aw(slope_re)
+    D_im = calc_d_from_aw(slope_im)
+    
+    return Aw, D_w, D_re, D_im
 
 
 def analyze_task32_eis() -> TaskReport:
@@ -690,7 +729,7 @@ def analyze_task32_eis() -> TaskReport:
         label = label_from_filename(path)
         z_re = pd.to_numeric(df[re_col], errors='coerce').to_numpy() * GC_AREA_CM2
         z_im = pd.to_numeric(df[im_col], errors='coerce').to_numpy() * GC_AREA_CM2
-        ax.plot(z_re, z_im, marker='o', ms=2.5, lw=0.8, label=label)
+        ax.plot(z_re, z_im, marker='o', ms=2.5, lw=0.8, label="Raw Data")
 
         chosen = fit_with_impedance_py(df, circuit_str='R0-p(R1,CPE1)-W1')
         z_fit_plot = None
@@ -699,7 +738,7 @@ def analyze_task32_eis() -> TaskReport:
             finite_mask = np.isfinite(z_fit.real) & np.isfinite(z_fit.imag)
             if finite_mask.any():
                 z_fit_plot = z_fit[finite_mask]
-                ax.plot(z_fit_plot.real, -z_fit_plot.imag, lw=1.2, alpha=0.9, label=f"{label} (fit)")
+                ax.plot(z_fit_plot.real, -z_fit_plot.imag, lw=1.2, alpha=0.9, label="Fit")
 
         fig_debug, ax_debug = plt.subplots(figsize=(5.0, 4.0))
         ax_debug.plot(z_re, z_im, 'o', ms=3, label='data')
@@ -720,7 +759,7 @@ def analyze_task32_eis() -> TaskReport:
         beautify_axes(ax_debug)
         ax_debug.set_aspect('equal', adjustable='box')
         debug_path = debug_dir / f'debug_EIS_fit_{label}.png'
-        fig_debug.savefig(debug_path, dpi=150, bbox_inches='tight')
+        fig_debug.savefig(debug_path, dpi=300, bbox_inches='tight', format='png', facecolor="white")
         plt.close(fig_debug)
         report.record_figure(debug_path)
 
@@ -767,7 +806,7 @@ def analyze_task32_eis() -> TaskReport:
         Rct_for_k0 = chosen.Rct if np.isfinite(chosen.Rct) and (chosen.Rct > 0) else Rct_best
         k0 = (R_GAS * T_K) / ((N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * Rct_for_k0) if (Rct_for_k0 and Rct_for_k0 > 0) else np.nan
 
-        Aw, D_w = _warburg_fit(df)
+        Aw, D_w, D_re, D_im = _warburg_fit(df)
         add_diffusion_coefficient(D_w, 'Warburg')
         if np.isfinite(D_w):
             report.add_message(f"[EIS] {label}: D_W~{D_w:.2e} cm^2/s")
@@ -793,10 +832,9 @@ def analyze_task32_eis() -> TaskReport:
             )
         )
 
-    ax.set_xlabel("Z' (ohm cm^2)")
-    ax.set_ylabel("-Z'' (ohm cm^2)")
-    ax.set_title("Task 3.2 - EIS Nyquist (area-normalized)")
-    ax.legend(title="Dataset", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
+    ax.set_xlabel(r"Z' [Ω cm$^2$]")
+    ax.set_ylabel(r"-Z'' [Ω cm$^2$]")
+    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     ax.set_aspect("equal", adjustable="box")
     report.record_figure(safe_save(fig, "T3.2_EIS_Nyquist.png"))
@@ -817,34 +855,126 @@ def analyze_task32_eis() -> TaskReport:
         omega = 2 * np.pi * pd.to_numeric(df[f_col], errors="coerce").to_numpy()
         mask = np.isfinite(z_re) & np.isfinite(z_im) & np.isfinite(omega) & (omega > 0)
         x = 1.0 / np.sqrt(omega[mask])
-        axw.plot(x, z_re[mask], lw=1.0, label=f"Re: {label_from_filename(path)}")
-        axw.plot(x, z_im[mask], lw=1.0, ls="--", label=f"-Im: {label_from_filename(path)}")
+        
+        # Plot data points
+        line_re = axw.plot(x, z_re[mask], lw=1.0, label="Re")
+        line_im = axw.plot(x, z_im[mask], lw=1.0, ls="-", label="-Im")
+        
+        # Perform Warburg fit to get linear fits
+        Aw, D_w, D_re, D_im = _warburg_fit(df)
+        if np.isfinite(Aw) and Aw > 0:
+            # Get the same data used in the fit
+            omega_fit = 2 * np.pi * pd.to_numeric(df[f_col], errors="coerce").to_numpy()
+            z_re_fit = pd.to_numeric(df[re_col], errors="coerce").to_numpy() * GC_AREA_CM2
+            z_im_fit = pd.to_numeric(df[im_col], errors="coerce").to_numpy() * GC_AREA_CM2
+            
+            mask_fit = np.isfinite(z_re_fit) & np.isfinite(z_im_fit) & np.isfinite(omega_fit) & (omega_fit > 0)
+            omega_fit = omega_fit[mask_fit]
+            z_re_fit = z_re_fit[mask_fit]
+            z_im_fit = z_im_fit[mask_fit]
+            
+            # Apply same selection criteria as in _warburg_fit
+            try:
+                lf_cut = np.quantile(omega_fit, 0.35)
+            except Exception:
+                lf_cut = np.nanmin(omega_fit)
+            angle45 = np.abs(z_re_fit - z_im_fit) / np.maximum(1e-9, (np.abs(z_re_fit) + np.abs(z_im_fit))) < 0.20
+            sel = (omega_fit <= lf_cut) & angle45
+            
+            if sel.sum() < 5:
+                order = np.argsort(omega_fit)
+                num = max(6, min(20, int(len(omega_fit) * 0.30)))
+                idx = order[:num]
+            else:
+                idx = np.where(sel)[0]
+            
+            x_fit = 1.0 / np.sqrt(omega_fit[idx])
+            y_re_fit = z_re_fit[idx]
+            y_im_fit = z_im_fit[idx]
+            
+            # Fit lines
+            if len(x_fit) >= 2:
+                # Fit Re line
+                A_re = np.vstack([x_fit, np.ones_like(x_fit)]).T
+                slope_re, intercept_re = np.linalg.lstsq(A_re, y_re_fit, rcond=None)[0]
+                
+                # Fit -Im line  
+                A_im = np.vstack([x_fit, np.ones_like(x_fit)]).T
+                slope_im, intercept_im = np.linalg.lstsq(A_im, y_im_fit, rcond=None)[0]
+                
+                # Plot fit lines
+                x_fit_line = np.linspace(np.min(x_fit), np.max(x_fit), 100)
+                y_re_fit_line = slope_re * x_fit_line + intercept_re
+                y_im_fit_line = slope_im * x_fit_line + intercept_im
+                
+                axw.plot(x_fit_line, y_re_fit_line, '--', color=line_re[0].get_color(), lw=1.5, alpha=0.8, label="Tail Fit (Re)")
+                axw.plot(x_fit_line, y_im_fit_line, '--', color=line_im[0].get_color(), lw=1.5, alpha=0.8, label="Tail Fit (-Im)")
 
-    axw.set_xlabel("1/sqrt(omega) (s^0.5)")
-    axw.set_ylabel("Z (ohm cm^2)")
-    axw.set_title("Task 3.2 - Warburg linearization")
-    axw.legend(title="Components", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8, ncol=1)
+    axw.set_xlabel(r"$1/\sqrt{\omega}$ [s$^{1/2}$]")
+    axw.set_ylabel(r"Z [Ω cm$^2$]")
+    axw.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8, ncol=1)
     beautify_axes(axw)
     report.record_figure(safe_save(figw, "T3.2_EIS_Warburg_linearization.png"))
 
     if results:
-        df_eis = pd.DataFrame(
-            [
-                {
-                    "label": r.label,
-                    "Rs_area_nls_Ohm_cm2": r.Rs_area_nls_Ohm_cm2,
-                    "Rct_area_nls_Ohm_cm2": r.Rct_area_nls_Ohm_cm2,
-                    "Cdl_nls_F_cm2": r.Cdl_nls_F_cm2,
-                    "sigma_Ohm_cm2_s05": r.sigma_Ohm_cm2_s05,
-                    "k0_cm_s": r.k0_cm_s,
-                    "Aw_Ohm_cm2_sqrt_s": r.Aw_Ohm_cm2_sqrt_s,
-                    "D_Warburg_cm2_s": r.D_Warburg_cm2_s,
-                    "rchi2": r.rchi2,
-                    "model_label": r.model_label,
-                }
-                for r in results
-            ]
-        )
+        # Create rows for both circuit-fit and linearization-fit results
+        csv_rows = []
+        for r in results:
+            # Circuit-fit row (all parameters from equivalent circuit fit)
+            circuit_aw = r.sigma_Ohm_cm2_s05 if np.isfinite(r.sigma_Ohm_cm2_s05) else float("nan")
+            circuit_d = float("nan")
+            if np.isfinite(circuit_aw) and circuit_aw > 0:
+                # Use same formula as linearization: D = (4RT / (n^2 F^2 C* A_W))^2
+                const_num = 4.0 * R_GAS * T_K
+                denom = (N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * circuit_aw
+                if denom > 0:
+                    D_half = const_num / denom
+                    circuit_d = float(D_half ** 2) if np.isfinite(D_half) and D_half > 0 else float("nan")
+            
+            csv_rows.append({
+                "label": f"{r.label}_circuit",
+                "Rs_area_nls_Ohm_cm2": r.Rs_area_nls_Ohm_cm2,
+                "Rct_area_nls_Ohm_cm2": r.Rct_area_nls_Ohm_cm2,
+                "Cdl_nls_F_cm2": r.Cdl_nls_F_cm2,
+                "sigma_Ohm_cm2_s05": r.sigma_Ohm_cm2_s05,
+                "k0_cm_s": r.k0_cm_s,
+                "Aw_Ohm_cm2_sqrt_s": circuit_aw,
+                "D_Warburg_cm2_s": circuit_d,
+                "rchi2": r.rchi2,
+                "model_label": r.model_label,
+            })
+            
+            # Linearization-fit row (Aw1, D1, Aw2, D2 from Warburg tail fit)
+            # Get individual slopes by calling _warburg_fit again to extract Re and -Im slopes
+            _, _, D_re, D_im = _warburg_fit(df)
+            
+            # Calculate Aw values from individual D values
+            def calc_aw_from_d(d_val):
+                if not np.isfinite(d_val) or d_val <= 0:
+                    return float("nan")
+                const_num = 4.0 * R_GAS * T_K
+                denom = (N_ELECTRONS ** 2) * (F_CONST ** 2) * C_BULK_MOL_PER_CM3 * np.sqrt(d_val)
+                return float(const_num / denom) if denom > 0 else float("nan")
+            
+            Aw_re = calc_aw_from_d(D_re)
+            Aw_im = calc_aw_from_d(D_im)
+            
+            csv_rows.append({
+                "label": f"{r.label}_linearization",
+                "Rs_area_nls_Ohm_cm2": float("nan"),
+                "Rct_area_nls_Ohm_cm2": float("nan"),
+                "Cdl_nls_F_cm2": float("nan"),
+                "sigma_Ohm_cm2_s05": float("nan"),
+                "k0_cm_s": float("nan"),
+                "Aw_Ohm_cm2_sqrt_s": Aw_re,                # Aw1 (Re slope)
+                "D_Warburg_cm2_s": D_re,                   # D1 (from Re slope)
+                "Aw2_Ohm_cm2_sqrt_s": Aw_im,               # Aw2 (-Im slope)
+                "D2_cm2_s": D_im,                          # D2 (from -Im slope)
+                "rchi2": float("nan"),
+                "model_label": "linearization",
+            })
+        
+        df_eis = pd.DataFrame(csv_rows)
         report.record_table(write_csv(df_eis, "T3.2_EIS_summary.csv"))
         report.add_message(f"[EIS] Processed {len(results)} spectra.")
     else:

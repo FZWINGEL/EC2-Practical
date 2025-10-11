@@ -1,37 +1,136 @@
 \chapter{Results}
 
 \section{Coin-cell cycling (Task 3.1)}
-We did not perform cyclic voltammetry (CV) on the assembled coin cells; therefore, this section focuses on galvanostatic charge\textendash discharge characterization at 0.1\,C, 1\,C, and 2\,C, together with incremental capacity (dQ/dE) analysis and voltage\textendash time transients.
 
 \subsection{Potential\textendash capacity profiles}
 \autoref{fig:T31_potential_vs_capacity} overlays the specific capacity\,\textit{vs.}\,potential curves at the three C\textendash rates. At the low rate (0.1\,C), the discharge capacity is highest and the (de)lithiation plateaus are most clearly developed. With increasing rate (1\,C and 2\,C), polarization grows (larger charge\textendash discharge hysteresis) and the accessible capacity decreases, consistent with kinetic and transport limitations. The chosen voltage window (2.4\,V to 4.2\,V) spans the practical operating region of the NCM\,811\,\textbar\,graphite full cell; at low rate it enables utilization of most of the available capacity, while at higher rates kinetic limitations dominate the accessible capacity.
 
 \begin{figure}[h]
-\centering
-\includesvg[width=0.95\textwidth]{T3.1_Potential_vs_Capacity}
-\caption{Potential\,\textit{vs.}\,specific capacity at 0.1\,C, 1\,C and 2\,C for the assembled coin cell. Higher C\textendash rates exhibit increased polarization and reduced accessible capacity compared to 0.1\,C.}
-\label{fig:T31_potential_vs_capacity}
-\end{figure}
+    \centering
+    \includesvg[width=0.8\textwidth]{images/T3.1_Potential_vs_Capacity.svg}
+    \caption{Potential\,\textit{vs.}\,specific capacity at 0.1\,C, 1\,C and 2\,C for the assembled coin cell. Higher C\textendash rates exhibit increased polarization and reduced accessible capacity compared to 0.1\,C.}
+    \label{fig:T31_potential_vs_capacity}
+    \end{figure}
+
+The experimental discharge capacities at 0.1\,C reach approximately 227\,mAh/g, which compares favorably to the theoretical capacity of graphite (372\,mAh/g for LiC$_6$ formation). The capacity shows a clear dependence on C\textendash rate, with decreasing accessible capacity at higher rates due to kinetic limitations and increased polarization.
 
 \subsection{Incremental capacity (dQ/dE) analysis}
-The incremental capacity plots in \autoref{fig:T31_dQdE} highlight potential\textendash resolved processes during charge and discharge. Distinct features observed at 0.1\,C broaden and diminish in amplitude at 1\,C and 2\,C, reflecting increased overpotentials and reduced time available for phase transitions. Only cathodic processes are considered when assigning discharge features. The overall trend\,\textemdash\,peak shifting to higher/lower potentials with rate and decreasing peak area\,\textemdash\,is consistent with transport and kinetic limitations at higher C\textendash rates.
+The cathodic incremental capacity analysis reveals distinct electrochemical processes at each C\textendash rate.
 
 \begin{figure}[h]
 \centering
-\includesvg[width=0.95\textwidth]{T3.1_dQdE}
-\caption{Incremental capacity (dQ/dE)\,\textit{vs.}\,potential for cycling at 0.1\,C, 1\,C and 2\,C. Increasing rate broadens and depresses features, consistent with higher polarization and reduced time for phase transitions.}
-\label{fig:T31_dQdE}
-\end{figure}
-
-\subsection{Voltage\textendash time transients}
-\autoref{fig:T31_vt} shows the voltage\,\textit{vs.}\,time profiles at the three rates. As expected, the total charge/discharge time scales inversely with C\textendash rate (longest at 0.1\,C, shortest at 2\,C). The more pronounced flat regions at low rate correlate with the sharper dQ/dE features, while at higher rate the profiles are more sloped due to increased IR drop and kinetic losses.
-
-\begin{figure}[h]
+\begin{subfigure}[b]{0.48\textwidth}
 \centering
-\includesvg[width=0.95\textwidth]{T3.1_V_vs_t}
-\caption{Voltage\,\textit{vs.}\,time at 0.1\,C, 1\,C and 2\,C. Faster rates shorten the (dis)charge durations and increase overall polarization.}
-\label{fig:T31_vt}
+\includesvg[width=\textwidth]{images/T3.1_dQdE_0.1C.svg}
+\caption{0.1\,C}
+\label{fig:T31_dQdE_01C}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includesvg[width=\textwidth]{images/T3.1_dQdE_1C.svg}
+\caption{1\,C}
+\label{fig:T31_dQdE_1C}
+\end{subfigure}
+\\[0.5em]
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includesvg[width=\textwidth]{images/T3.1_dQdE_2C.svg}
+\caption{2\,C}
+\label{fig:T31_dQdE_2C}
+\end{subfigure}
+\caption{Incremental capacity (dQ/dE)\,\textit{vs.}\,potential at different C\textendash rates. At 0.1\,C, sharp, well\textendash resolved peaks reveal distinct graphite staging transitions and NMC811 cathode redox processes. With increasing rate, peaks broaden and decrease in amplitude, with high\textendash voltage features showing progressive suppression.}
+\label{fig:T31_dQdE_all}
 \end{figure}
+
+\autoref{fig:T31_dQdE_01C} shows the 0.1\,C discharge profile, where several sharp, well\textendash resolved peaks appear between 3.0\textendash 4.1\,V. A dominant group around 3.4\textendash 3.8\,V corresponds to staged Li$^+$ intercalation in graphite (progression toward stage~1, LiC$_6$), while a shoulder near 3.9\textendash 4.1\,V reflects the high\textendash voltage redox of the NMC811 cathode. These features align with the plateaus observed in \autoref{fig:T31_potential_vs_capacity}.
+
+At 1\,C (\autoref{fig:T31_dQdE_1C}), the peaks begin to broaden and decrease in amplitude, with the highest\textendash voltage features showing the most significant suppression. The graphite staging peaks remain discernible but are less sharp, indicating increased kinetic limitations while maintaining reasonable reversibility.
+
+The 2\,C profile (\autoref{fig:T31_dQdE_2C}) demonstrates substantial peak broadening and amplitude reduction. The high\textendash voltage cathode features are largely suppressed, and the graphite staging peaks merge into broader features, reflecting transport\textendash limited behavior at this rate.
+
+From these individual rate analyses we conclude that rate\textendash induced polarization progressively dominates with increasing C\textendash rate, merging graphite staging peaks and suppressing high\textendash voltage features. No additional peaks emerge at high rate within 2.4\textendash 4.2\,V, consistent with the high Coulombic efficiency and absence of parasitic processes. Graphite intercalation steps remain discernible up to 1\,C, indicating acceptable anode kinetics; at 2\,C they become transport\textendash limited.
 
 \subsection{Coulombic efficiency}
-The Coulombic efficiency (CE) was evaluated as the ratio of discharge to charge capacity for each cycle. At 0.1\,C, CE rapidly approaches near\textendash unity after initial formation, indicating minimal parasitic reactions once the SEI is stabilized. At higher rates (1\,C and 2\,C), CE remains high but can show a slightly larger deviation from unity, consistent with increased polarization and potential side reactions at elevated current. Across all three rates, the trends are consistent with a well\textendash behaved NCM\,811\,\textbar\,graphite full cell operating within the selected voltage window.
+The Coulombic efficiency (CE) was evaluated as the ratio of discharge to charge capacity for each cycle using Equation~\ref{eq:ce}:
+
+\begin{equation}
+CE = \frac{Q_{discharge}}{Q_{charge}} \times 100\%
+\label{eq:ce}
+\end{equation}
+
+The CE values from the cycling data show distinct behavior at different C\textendash rates. \autoref{tab:ce_values} presents the complete CE data for all cycles at each C\textendash rate.
+
+\begin{table}[h]
+\centering
+\caption{Coulombic efficiency values for all cycles at different C\textendash rates}
+\label{tab:ce_values}
+\begin{subtable}[h]{0.32\textwidth}
+\centering
+\caption{0.1\,C}
+\begin{tabular}{cc}
+\toprule
+Cycle & CE (\%) \\
+\midrule
+1 & 39.1 \\
+2 & 101.8 \\
+3 & 98.8 \\
+4 & 100.1 \\
+5 & 100.0 \\
+6 & 99.9 \\
+7 & 99.7 \\
+8 & 99.7 \\
+9 & 99.7 \\
+10 & 99.7 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\hfill
+\begin{subtable}[h]{0.32\textwidth}
+\centering
+\caption{1\,C}
+\begin{tabular}{cc}
+\toprule
+Cycle & CE (\%) \\
+\midrule
+11 & 95.7 \\
+12 & 98.9 \\
+13 & 99.1 \\
+14 & 99.1 \\
+15 & 99.1 \\
+16 & 99.2 \\
+17 & 99.2 \\
+18 & 99.2 \\
+19 & 99.3 \\
+20 & 99.3 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\hfill
+\begin{subtable}[h]{0.32\textwidth}
+\centering
+\caption{2\,C}
+\begin{tabular}{cc}
+\toprule
+Cycle & CE (\%) \\
+\midrule
+21 & 98.7 \\
+22 & 99.0 \\
+23 & 98.9 \\
+24 & 98.8 \\
+25 & 98.8 \\
+26 & 98.7 \\
+27 & 98.6 \\
+28 & 98.6 \\
+29 & 98.6 \\
+30 & 98.6 \\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\end{table}
+
+At 0.1\,C, the initial cycle shows a low CE of 39.1\% due to SEI formation and initial activation processes. However, subsequent cycles rapidly stabilize with CE values approaching 100\% (cycles 2\textendash 10: 98.8\textendash 100.1\%), indicating excellent reversibility once the SEI is established.
+
+At 1\,C, the CE remains consistently high throughout cycling (95.7\textendash 99.3\%), with slight variations attributed to increased polarization effects. The 2\,C rate shows similar high CE values (98.6\textendash 99.0\%), demonstrating that the cell maintains good reversibility even at elevated current densities.
+
+The CE shows minimal dependence on C\textendash rate once the initial formation cycles are completed, indicating that the chosen voltage window (2.4\textendash 4.2\,V) allows for stable operation across all tested rates without significant side reactions or electrolyte decomposition.

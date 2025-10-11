@@ -157,7 +157,21 @@ def analyze_task32_cp() -> TaskReport:
 
         t_s = pd.to_numeric(df[t_col], errors="coerce").to_numpy()
         e_v = pd.to_numeric(df[e_col], errors="coerce").to_numpy()
-        ax.plot(t_s, e_v, lw=1.0, label=label_from_filename(path))
+        
+        # Create proper legend label based on filename
+        filename = path.stem
+        if "01_CP" in filename:
+            legend_label = "-1 µA"
+        elif "03_CP" in filename:
+            legend_label = "-10 µA"
+        elif "05_CP" in filename:
+            legend_label = "-20 µA"
+        elif "07_CP" in filename:
+            legend_label = "-50 µA"
+        else:
+            legend_label = label_from_filename(path)
+        
+        ax.plot(t_s, e_v, lw=1.0, label=legend_label)
 
         i_series = pd.to_numeric(df[i_col], errors="coerce").to_numpy() if (i_col and i_col in df) else None
         segments = _segment_by_current_plateaus(t_s, i_series)
@@ -215,9 +229,8 @@ def analyze_task32_cp() -> TaskReport:
                 )
             )
 
-    ax.set_xlabel("t (s)")
+    ax.set_xlabel("t [s]")
     ax.set_ylabel("E (V vs Ag/AgCl)")
-    ax.set_title("Task 3.2 - Chronopotentiometry (E vs t)")
     ax.legend(title="Applied current", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     report.record_figure(safe_save(fig, "T3.2_CP_transients.png"))

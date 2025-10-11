@@ -705,7 +705,7 @@ def run_eis_analysis(config: AnalysisConfig) -> TaskReport:
         beautify_axes(ax_debug)
         ax_debug.set_aspect('equal', adjustable='box')
         debug_path = debug_dir / f'debug_EIS_fit_{label}.png'
-        fig_debug.savefig(debug_path, dpi=150, bbox_inches='tight')
+        fig_debug.savefig(debug_path, dpi=300, bbox_inches='tight', format='png', facecolor="white")
         plt.close(fig_debug)
         report.record_figure(debug_path)
 

@@ -138,18 +138,17 @@ def _fit_randles_sevcik(df_summary: pd.DataFrame, report: TaskReport) -> None:
     )
 
     fig_rs, ax_rs = plt.subplots(figsize=(6.0, 4.2))
-    ax_rs.plot(v_sqrt, ipa_A * 1e3, "o", label="|i_pa| (anodic)")
-    ax_rs.plot(v_sqrt, ipc_A * 1e3, "s", label="|i_pc| (cathodic)")
+    line1 = ax_rs.plot(v_sqrt, ipa_A * 1e3, "o", label="|i_pa| (anodic)")
+    line2 = ax_rs.plot(v_sqrt, ipc_A * 1e3, "s", label="|i_pc| (cathodic)")
 
     xfit = np.linspace(np.nanmin(v_sqrt), np.nanmax(v_sqrt), 100)
     yfit_a_mA = (slope_a * xfit + intercept_a) * 1e3
     yfit_c_mA = (slope_c * xfit + intercept_c) * 1e3
-    ax_rs.plot(xfit, yfit_a_mA, "-", label=f"fit anodic; D~{D_rs_a:.2e} cm^2/s")
-    ax_rs.plot(xfit, yfit_c_mA, "--", label=f"fit cathodic; D~{D_rs_c:.2e} cm^2/s")
+    ax_rs.plot(xfit, yfit_a_mA, "-", color=line1[0].get_color(), label="fit (anodic)")
+    ax_rs.plot(xfit, yfit_c_mA, "-", color=line2[0].get_color(), label="fit (cathodic)")
 
-    ax_rs.set_xlabel(r"$\sqrt{v}$ (V$^{1/2}$ s$^{-1/2}$)")
-    ax_rs.set_ylabel(r"$i_p$ (mA)")
-    ax_rs.set_title("Task 3.2 - Randles-Sevcik (peak current vs sqrt(v))")
+    ax_rs.set_xlabel(r"$\sqrt{v}$ [V$^{1/2}$ s$^{-1/2}$]")
+    ax_rs.set_ylabel(r"$i_p$ [mA]")
     ax_rs.legend(title="Peaks and fits", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax_rs)
     report.record_figure(safe_save(fig_rs, "T3.2_CV_RandlesSevcik.png"))
@@ -192,7 +191,7 @@ def analyze_task32_cvs() -> TaskReport:
             t_s = pd.to_numeric(df_use[t_col], errors="coerce").to_numpy()
             scan_rate = estimate_scan_rate_Vs(e_v, t_s)
         if scan_rate is not None and np.isfinite(scan_rate):
-            legend_label = f"v~{scan_rate*1000:.0f} mV/s"
+            legend_label = f"{scan_rate*1000:.0f} mV/s"
         else:
             legend_label = label_from_filename(path)
 
@@ -215,9 +214,8 @@ def analyze_task32_cvs() -> TaskReport:
         )
 
     ax.set_xlabel("E (V vs Ag/AgCl)")
-    ax.set_ylabel("j (mA cm$^{-2}$)")
-    ax.set_title("Task 3.2 - CVs (last cycle per file)")
-    ax.legend(title="Scan rate (approx.)", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
+    ax.set_ylabel("j [mA cm$^{-2}$]")
+    ax.legend(title="Scan rate", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0, fontsize=8)
     beautify_axes(ax)
     report.record_figure(safe_save(fig, "T3.2_CV_overlay.png"))
 

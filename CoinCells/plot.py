@@ -4,13 +4,13 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-import shutil
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.ticker import AutoMinorLocator
 
 try:
     from scipy.signal import savgol_filter
@@ -36,40 +36,48 @@ MASS_MG: Dict[str, float] = {
     "HE": 9.70,
 }
 
+# dQdE smoothing configuration
+class SmoothingConfig:
+    """Configuration for dQdE smoothing methods."""
+    
+    # Available smoothing methods
+    NONE = "none"           # No smoothing
+    SAVITZKY_GOLAY = "savgol"  # Savitzky-Golay filter
+    MOVING_AVERAGE = "moving_avg"  # Simple moving average
+    
+    def __init__(self, method: str = SAVITZKY_GOLAY, window_length: int = 21, polyorder: int = 3):
+        """
+        Initialize smoothing configuration.
+        
+        Args:
+            method: Smoothing method ('none', 'savgol', 'moving_avg')
+            window_length: Window length for smoothing (must be odd for Savitzky-Golay)
+            polyorder: Polynomial order for Savitzky-Golay (ignored for other methods)
+        """
+        self.method = method
+        self.window_length = window_length
+        self.polyorder = polyorder
+        
+        # Ensure window_length is odd for Savitzky-Golay
+        if method == self.SAVITZKY_GOLAY and window_length % 2 == 0:
+            self.window_length = window_length + 1
+
+# Default smoothing configuration - easily change this to modify behavior
+DEFAULT_SMOOTHING = SmoothingConfig(method=SmoothingConfig.SAVITZKY_GOLAY, window_length=21, polyorder=3)
+
+# Easy configuration examples - uncomment one of these to change smoothing behavior:
+# DEFAULT_SMOOTHING = SmoothingConfig(method=SmoothingConfig.NONE)  # No smoothing
+# DEFAULT_SMOOTHING = SmoothingConfig(method=SmoothingConfig.SAVITZKY_GOLAY, window_length=15, polyorder=2)  # Lighter Savitzky-Golay
+# DEFAULT_SMOOTHING = SmoothingConfig(method=SmoothingConfig.SAVITZKY_GOLAY, window_length=31, polyorder=4)  # Heavier Savitzky-Golay
+# DEFAULT_SMOOTHING = SmoothingConfig(method=SmoothingConfig.MOVING_AVERAGE, window_length=15)  # Moving average
+
 # Plot styling
-plt.rcParams["figure.dpi"] = 120
+plt.rcParams["figure.dpi"] = 300  # high DPI for PNG
 plt.rcParams["axes.grid"] = True
 plt.rcParams["grid.alpha"] = 0.25
 plt.rcParams["axes.spines.top"] = False
 plt.rcParams["axes.spines.right"] = False
-plt.rcParams["svg.fonttype"] = "none"  # keep text as text in SVG
-plt.rcParams["text.usetex"] = False  # Prefer mathtext by default; try enabling LaTeX below
-
-
-def try_enable_usetex() -> None:
-    """
-    Enable LaTeX rendering only if a working LaTeX toolchain is available.
-    Falls back to mathtext if not.
-    """
-    use_tex = False
-    try:
-        # Require latex and either dvipng or dvisvgm for rendering
-        if shutil.which("latex") and (shutil.which("dvipng") or shutil.which("dvisvgm")):
-            import matplotlib as mpl  # local import to avoid global dependency at import time
-            mpl.rcParams["text.usetex"] = True
-            # Probe a minimal draw to verify the toolchain works
-            fig = plt.figure()
-            fig.text(0.5, 0.5, r"$E$ [V]")
-            fig.canvas.draw()
-            plt.close(fig)
-            use_tex = True
-    except Exception:
-        use_tex = False
-    if not use_tex:
-        plt.rcParams["text.usetex"] = False
-
-
-try_enable_usetex()
+plt.rcParams["text.usetex"] = False  # Use plain text, no LaTeX
 
 
 # -----------------------------
@@ -79,7 +87,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 FIG_DIR = ROOT / "figures"
 RES_DIR = ROOT / "results"
-PLOT_EXT = ".svg"
+PLOT_EXT = ".png"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 RES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -306,18 +314,52 @@ def first_existing(df: pd.DataFrame, names: List[str]) -> Optional[str]:
     return None
 
 
-def smooth(y: np.ndarray, window: int = 21, poly: int = 3) -> np.ndarray:
+def smooth(y: np.ndarray, config: SmoothingConfig = None) -> np.ndarray:
+    """
+    Apply smoothing to data based on configuration.
+    
+    Args:
+        y: Input data array
+        config: SmoothingConfig object specifying method and parameters
+        
+    Returns:
+        Smoothed data array
+    """
+    if config is None:
+        config = DEFAULT_SMOOTHING
+        
     n = len(y)
     if n < 5:
         return y
-    if HAS_SCIPY and window < n and window % 2 == 1:
-        try:
-            return savgol_filter(y, window_length=window, polyorder=min(poly, window - 2), mode="interp")
-        except Exception:
-            pass
-    # fallback rolling mean
-    s = pd.Series(y, dtype=float).rolling(window=min(11, max(3, n//10)), center=True, min_periods=1).mean().values
-    return s
+    
+    if config.method == SmoothingConfig.NONE:
+        return y
+    
+    elif config.method == SmoothingConfig.SAVITZKY_GOLAY:
+        if HAS_SCIPY and config.window_length < n and config.window_length % 2 == 1:
+            try:
+                return savgol_filter(
+                    y, 
+                    window_length=config.window_length, 
+                    polyorder=min(config.polyorder, config.window_length - 2), 
+                    mode="interp"
+                )
+            except Exception:
+                # Fallback to moving average if Savitzky-Golay fails
+                pass
+        # Fallback to moving average if SciPy unavailable or window invalid
+        window = min(config.window_length, max(3, n//10))
+        if window % 2 == 0:
+            window += 1
+        return pd.Series(y, dtype=float).rolling(window=window, center=True, min_periods=1).mean().values
+    
+    elif config.method == SmoothingConfig.MOVING_AVERAGE:
+        window = min(config.window_length, max(3, n//10))
+        return pd.Series(y, dtype=float).rolling(window=window, center=True, min_periods=1).mean().values
+    
+    else:
+        # Unknown method, return original data
+        return y
 
 
 # -----------------------------
@@ -487,128 +529,81 @@ def estimate_c_rate(I_A: float, mass_g: float, q_theor_mAh_g: float) -> float:
     return float(I_A / denom) if denom > 0 else np.nan
 
 
-# -----------------------------
-# CV detection and plotting
-# -----------------------------
-def try_extract_cv_cycles(df: pd.DataFrame, max_cycles: int = 3) -> List[pd.DataFrame]:
-    """
-    Heuristic extraction of CV cycles:
-      - If step labels contain 'cv', use those rows.
-      - Else, try to detect voltage scan reversals (sign flips in dE/dt) and build cycles.
-    Returns a list of dataframes (each a CV cycle with columns E, I).
-    """
-    data = df.copy()
-
-    # Quick sanity: if current is nearly zero everywhere, this is not CV
-    if np.nanmax(np.abs(data["current_a"].values)) < 1e-9:
-        return []
-
-    # Prefer explicit 'cv' in labels
-    mask_cv = (
-        data["step_label"].str.lower().str.contains("cv", na=False)
-        | data["type_label"].str.contains("cv", na=False)
-        | data["task_label"].str.contains("cv", na=False)
-    )
-    cv_df = data.loc[mask_cv].copy()
-    # Only accept CV if we have a meaningful number of rows tagged as CV
-    if len(cv_df) < 50:
-        return []
-
-    # Identify reversal points from dE/dt sign changes
-    de = cv_df["dE_dt"].values
-    sign = np.sign(de)
-    sign[np.isnan(sign)] = 0
-    flips = np.where(np.diff(sign) != 0)[0] + 1
-    if len(flips) < 3:
-        # not convincing CV; return empty
-        return []
-
-    # Build cycles between alternating vertices; assume 2 scans per cycle
-    # Use windows of 2 consecutive flips for one scan, 4 flips for one full cycle
-    cycles = []
-    start = 0
-    # Each full cycle is approx 2 segments (forward+reverse), i.e., 2 flips
-    # Use 2 flips per cycle for robustness
-    for k in range(0, min(len(flips) - 1, 2 * max_cycles), 2):
-        end = flips[k + 1]
-        cyc = cv_df.iloc[start:end+1].copy()
-        # Clean small NaNs
-        cyc = cyc.dropna(subset=["voltage_v", "current_a"])
-        if len(cyc) > 5:
-            cycles.append(cyc[["voltage_v", "current_a"]].rename(columns={
-                "voltage_v": "E_V", "current_a": "I_A"
-            }))
-        start = end
-        if len(cycles) >= max_cycles:
-            break
-
-    return cycles
 
 
 # -----------------------------
 # Plotting
 # -----------------------------
-def plot_cv_overlay(sample_id: str, cycles: List[pd.DataFrame], outpath: Path) -> None:
-    if not cycles:
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.text(0.5, 0.5, "No CV detected", ha="center", va="center", transform=ax.transAxes)
-        ax.set_axis_off()
-        fig.tight_layout()
-        fig.savefig(outpath)
-        plt.close(fig)
-        return
-    fig, ax = plt.subplots(figsize=(6, 4))
-    colors = plt.cm.tab10.colors
-    for i, cyc in enumerate(cycles, start=1):
-        ax.plot(cyc["E_V"].values, cyc["I_A"].values * 1000.0, lw=1.5, color=colors[(i - 1) % 10], label=f"Cycle {i}")
-    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
-    ax.set_ylabel(r"$I$ $\left[\text{mA}\right]$", fontsize=14)
-    ax.set_title(f"CV overlay (first 3 cycles) - {sample_id}")
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(outpath)
-    plt.close(fig)
 
 
 def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, outpath: Path) -> None:
     """
     Overlay charge/discharge segments across cycles in one plot: E vs Q (mAh/g).
+    Colors represent C-rates (0.1C, 1C, 2C), with vertical lines for theoretical capacities.
     """
-    fig, ax = plt.subplots(figsize=(6, 4))
-    colors = plt.cm.tab10.colors
+    fig, ax = plt.subplots(figsize=(8.5, 4.5))  # Wider to accommodate external legends
+    # Professional ticks and grid
+    ax.tick_params(axis="both", which="major", direction="out", length=5, width=0.8)
+    ax.tick_params(axis="both", which="minor", direction="out", length=3, width=0.6)
+    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.grid(True, which="major", linestyle="-", linewidth=0.6, alpha=0.25)
+    ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.15)
+    
+    # Define colors for each C-rate
+    c_rate_colors = {
+        0.1: '#1f77b4',  # blue
+        1.0: '#ff7f0e',  # orange  
+        2.0: '#d62728'   # red
+    }
+    
+    # Tolerance for C-rate matching (±20%)
+    c_rate_tolerance = 0.2
 
     # Ensure normalized capacity per segment exists
     df = df.copy()
     # Convert integrated capacity (mAh) to specific capacity (mAh/g)
     df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g
 
-    labels_done: set = set()
-    labelled_cycles: set = set()
+    # Track which C-rates are present for legend
+    c_rates_present = set()
+    labelled_crates = set()
 
-    # Choose a compact set of cycles to show in the legend (max 8)
-    cycles_present = sorted([int(c) for c in df["cycle_est"].dropna().unique() if int(c) > 0])
-    if cycles_present:
-        num_to_label = min(8, len(cycles_present))
-        # Evenly spaced selection including first and last
-        sel_idx = np.unique(np.linspace(0, len(cycles_present) - 1, num=num_to_label, dtype=int))
-        selected_cycles = {cycles_present[i] for i in sel_idx}
-    else:
-        selected_cycles = set()
+    # Plot segments grouped by C-rate
     for cyc, gcyc in df.groupby("cycle_est", sort=True):
         if cyc == 0:
             continue
-        color = colors[(cyc - 1) % len(colors)]
         # plot each segment in this cycle
         for sid, gseg in gcyc.groupby("seg_id", sort=True):
             if gseg["cap_mAh_g_seg"].abs().max() < 1e-6:
                 continue
+            
+            # Calculate C-rate for this segment
+            mean_current = gseg["current_a"].abs().mean()
+            c_rate = estimate_c_rate(mean_current, mass_g, THEORETICAL_CAPACITY_MAH_G)
+            
+            # Find closest C-rate category
+            closest_crate = None
+            for target_crate in [0.1, 1.0, 2.0]:
+                if abs(c_rate - target_crate) <= target_crate * c_rate_tolerance:
+                    closest_crate = target_crate
+                    break
+            
+            if closest_crate is None:
+                continue  # Skip segments that don't match any C-rate category
+                
+            c_rates_present.add(closest_crate)
+            color = c_rate_colors[closest_crate]
+            
             is_discharge = bool(gseg["is_discharge"].iloc[0])
-            # Label only once per cycle (use discharge as representative)
-            if is_discharge and cyc in selected_cycles and cyc not in labelled_cycles:
-                lbl = f"Cycle {cyc}"
-                labelled_cycles.add(cyc)
+            
+            # Label only once per C-rate (use discharge as representative)
+            if is_discharge and closest_crate not in labelled_crates:
+                lbl = f"{closest_crate}C"
+                labelled_crates.add(closest_crate)
             else:
                 lbl = None
+                
             ax.plot(
                 gseg["cap_mAh_g_seg"].abs().values,
                 gseg["voltage_v"].values,
@@ -618,7 +613,6 @@ def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, 
                 alpha=0.95 if is_discharge else 0.6,
                 label=lbl,
             )
-            labels_done.add(lbl or f"{sid}-{cyc}")
 
     # Y-axis: exactly min..max of plotted data (no extra margins)
     try:
@@ -635,43 +629,100 @@ def plot_potential_vs_capacity(sample_id: str, df: pd.DataFrame, mass_g: float, 
     except Exception:
         pass
 
-    ax.set_xlabel(r"Capacity $\left[\frac{\text{mAh}}{\text{g}}\right]$", fontsize=14)
-    ax.set_ylabel(r"Potential $\left[\text{V}\right]$", fontsize=14)
-    ax.set_title(f"Potential vs Capacity")
-    # Nice x-limits
+    ax.set_xlabel("Capacity [mAh/g]", fontsize=14)
+    ax.set_ylabel("Potential [V]", fontsize=14)
+    # Nice x-limits - ensure Graphite line at 372 mAh/g is visible
     try:
         qmax = float(np.nanmax(np.abs(df["cap_mAh_g_seg"].values)))
-        ax.set_xlim(0, min(max(200.0, qmax * 1.05), 380.0))
+        ax.set_xlim(0, max(400.0, qmax * 1.05))  # Always show at least up to 400 mAh/g
+    except Exception:
+        ax.set_xlim(0, 400.0)  # Default range if data processing fails
+
+    # Theoretical capacity markers (annotated lines, not part of legend)
+    try:
+        y0, y1 = ax.get_ylim()
+        x_nmc = 200
+        x_graphite = 372
+        ax.axvline(x=x_nmc, color="black", linestyle=":", alpha=0.8, linewidth=1.5)
+        ax.axvline(x=x_graphite, color="purple", linestyle=":", alpha=0.8, linewidth=1.5)
+        ax.annotate(
+            "NMC-811 (~200 mAh/g)",
+            xy=(x_nmc, y1),
+            xytext=(8, -8),
+            textcoords="offset points",
+            rotation=90,
+            va="top",
+            ha="left",
+            color="black",
+            fontsize=8,
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"),
+        )
+        ax.annotate(
+            "Graphite (372 mAh/g)",
+            xy=(x_graphite, y1),
+            xytext=(5, -5),
+            textcoords="offset points",
+            rotation=90,
+            va="top",
+            ha="left",
+            color="purple",
+            fontsize=8,
+        )
     except Exception:
         pass
 
-    # Legend outside (right): cycles + style key
-    handles, labels = ax.get_legend_handles_labels()
-    style_handles = [
-        Line2D([0], [0], color="0.2", lw=1.6, ls="-", label="Discharge"),
-        Line2D([0], [0], color="0.2", lw=1.2, ls="--", label="Charge"),
-    ]
-    handles_all = handles + style_handles
-    labels_all = labels + [h.get_label() for h in style_handles]
-    if handles_all:
-        ax.legend(
-            handles_all,
-            labels_all,
-            title="Cycles",
+    # Legends outside right: one for C-rates, one for style
+    if c_rates_present:
+        cr_list = sorted(list(c_rates_present))
+        cr_handles = [
+            Line2D([0], [0], color=c_rate_colors[c], lw=1.8, ls="-") for c in cr_list
+        ]
+        cr_labels = []
+        for c in cr_list:
+            if c == 0.1:
+                cr_labels.append("C/10")
+            else:
+                cr_labels.append(f"{c:g}C")
+        leg1 = ax.legend(
+            cr_handles,
+            cr_labels,
+            title="C-Rates",
             fontsize=8,
             loc="upper left",
             bbox_to_anchor=(1.02, 1.0),
             borderaxespad=0.0,
             framealpha=0.95,
         )
+        ax.add_artist(leg1)
+
+    style_handles = [
+        Line2D([0], [0], color="0.2", lw=1.6, ls="-", label="Discharge"),
+        Line2D([0], [0], color="0.2", lw=1.2, ls="--", label="Charge"),
+    ]
+    ax.legend(
+        style_handles,
+        [h.get_label() for h in style_handles],
+        fontsize=8,
+        loc="upper left",
+        bbox_to_anchor=(1.02, 0.62),
+        borderaxespad=0.0,
+        framealpha=0.95,
+    )
     fig.tight_layout()
-    fig.savefig(outpath, bbox_inches="tight")
+    fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
-def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath: Path) -> None:
+def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath: Path, smoothing_config: SmoothingConfig = None) -> None:
     """
     Compute and plot dQ/dE vs E for cathodic (discharge) segments.
+    
+    Args:
+        sample_id: Sample identifier
+        df: DataFrame with processed data
+        mass_g: Mass in grams
+        outpath: Output path for the plot
+        smoothing_config: SmoothingConfig object for dQdE smoothing
     """
     fig, ax = plt.subplots(figsize=(6, 4))
     colors = plt.cm.tab10.colors
@@ -692,20 +743,11 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
             Q = gseg["cap_mAh_g_seg"].abs().values
             if len(E) < 5:
                 continue
-            # Smooth E and Q with Savitzky–Golay (fallback if SciPy unavailable)
-            if HAS_SCIPY:
-                n_pts = len(E)
-                win = min(11100, n_pts if n_pts % 2 == 1 else n_pts - 1)
-                if win >= 5:
-                    poly = 3 if win > 5 else 2
-                    Es = savgol_filter(E, window_length=win, polyorder=min(poly, win - 1), mode="interp")
-                    Qs = savgol_filter(Q, window_length=win, polyorder=min(poly, win - 1), mode="interp")
-                else:
-                    Es = smooth(E, window=7)
-                    Qs = smooth(Q, window=7)
-            else:
-                Es = smooth(E, window=11)
-                Qs = smooth(Q, window=11)
+            # Use configurable smoothing for E and Q
+            if smoothing_config is None:
+                smoothing_config = DEFAULT_SMOOTHING
+            Es = smooth(E, smoothing_config)
+            Qs = smooth(Q, smoothing_config)
             # Compute derivative dQ/dE with guards against tiny dE and spikes
             with np.errstate(divide='ignore', invalid='ignore'):
                 dQ_dE = np.gradient(Qs, Es)
@@ -719,21 +761,26 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
                 lo, hi = np.nanpercentile(dQ_dE[finite_mask], [1.0, 99.0])
                 dQ_dE = np.clip(dQ_dE, lo, hi)
             # Lightly smooth the derivative to suppress residual spikes
-            dQ_dE = smooth(dQ_dE, window=min(101, max(7, (len(dQ_dE)//50)*2 + 1)))
+            # Use a lighter smoothing for the derivative (smaller window)
+            derivative_config = SmoothingConfig(
+                method=smoothing_config.method,
+                window_length=min(101, max(7, (len(dQ_dE)//50)*2 + 1)),
+                polyorder=smoothing_config.polyorder
+            )
+            dQ_dE = smooth(dQ_dE, derivative_config)
             ax.plot(Es, dQ_dE, lw=1.4, color=colors[color_idx % 10], label=f"Cycle {cyc}")
             color_idx += 1
 
-    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
-    ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
-    ax.set_title(f"dQ/dE (cathodic)")
+    ax.set_xlabel("E [V]", fontsize=14)
+    ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
     #if color_idx > 0:
     #ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(outpath)
+    fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
-def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float, target_c_rate: float, outpath: Path) -> None:
+def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float, target_c_rate: float, outpath: Path, smoothing_config: SmoothingConfig = None) -> None:
     """
     Compute and plot dQ/dE vs E for cathodic (discharge) segments filtered by C-rate.
     
@@ -743,8 +790,9 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
         mass_g: Mass in grams
         target_c_rate: Target C-rate to filter by (e.g., 0.1, 1.0, 2.0)
         outpath: Output path for the plot
+        smoothing_config: SmoothingConfig object for dQdE smoothing
     """
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(8, 4))  # Wider to accommodate external legend
     colors = plt.cm.tab10.colors
     color_idx = 0
     
@@ -777,11 +825,10 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
         # No segments found for this C-rate
         ax.text(0.5, 0.5, f"No discharge segments found\nfor {target_c_rate}C (±{c_rate_tolerance*100:.0f}%)", 
                 ha="center", va="center", transform=ax.transAxes, fontsize=12)
-        ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
-        ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
-        ax.set_title(f"dQ/dE (cathodic) - {target_c_rate}C")
+        ax.set_xlabel("E [V]", fontsize=14)
+        ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
         fig.tight_layout()
-        fig.savefig(outpath)
+        fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
         plt.close(fig)
         return
 
@@ -792,20 +839,11 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
         if len(E) < 5:
             continue
             
-        # Smooth E and Q with Savitzky–Golay (fallback if SciPy unavailable)
-        if HAS_SCIPY:
-            n_pts = len(E)
-            win = min(11100, n_pts if n_pts % 2 == 1 else n_pts - 1)
-            if win >= 5:
-                poly = 3 if win > 5 else 2
-                Es = savgol_filter(E, window_length=win, polyorder=min(poly, win - 1), mode="interp")
-                Qs = savgol_filter(Q, window_length=win, polyorder=min(poly, win - 1), mode="interp")
-            else:
-                Es = smooth(E, window=7)
-                Qs = smooth(Q, window=7)
-        else:
-            Es = smooth(E, window=11)
-            Qs = smooth(Q, window=11)
+        # Use configurable smoothing for E and Q
+        if smoothing_config is None:
+            smoothing_config = DEFAULT_SMOOTHING
+        Es = smooth(E, smoothing_config)
+        Qs = smooth(Q, smoothing_config)
             
         # Compute derivative dQ/dE with guards against tiny dE and spikes
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -820,49 +858,46 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
             lo, hi = np.nanpercentile(dQ_dE[finite_mask], [1.0, 99.0])
             dQ_dE = np.clip(dQ_dE, lo, hi)
         # Lightly smooth the derivative to suppress residual spikes
-        dQ_dE = smooth(dQ_dE, window=min(101, max(7, (len(dQ_dE)//50)*2 + 1)))
+        # Use a lighter smoothing for the derivative (smaller window)
+        derivative_config = SmoothingConfig(
+            method=smoothing_config.method,
+            window_length=min(101, max(7, (len(dQ_dE)//50)*2 + 1)),
+            polyorder=smoothing_config.polyorder
+        )
+        dQ_dE = smooth(dQ_dE, derivative_config)
         ax.plot(Es, dQ_dE, lw=1.4, color=colors[color_idx % 10], 
-                label=f"Cycle {cyc} ({c_rate:.2f}C)")
+                label=f"Cycle {cyc}")
         color_idx += 1
 
-    ax.set_xlabel(r"$E$ $\left[\text{V}\right]$", fontsize=14)
-    ax.set_ylabel(r"$\frac{dQ}{dE}$ $\left[\frac{\text{mAh}}{\text{g}\cdot\text{V}}\right]$", fontsize=14)
-    ax.set_title(f"dQ/dE (cathodic) - {target_c_rate}C")
+    ax.set_xlabel("E [V]", fontsize=14)
+    ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
     if color_idx > 0:
-        ax.legend(fontsize=8)
+        ax.legend(fontsize=8, loc="center left", bbox_to_anchor=(1.05, 0.5))
     fig.tight_layout()
-    fig.savefig(outpath)
+    fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
 # New: simple voltage vs time diagnostic plot
 def plot_voltage_over_time(sample_id: str, df: pd.DataFrame, outpath: Path) -> None:
-    fig, ax = plt.subplots(figsize=(6, 4))
-    t = df["time_s"].values
+    fig, ax = plt.subplots(figsize=(8, 4))
+    t_hours = df["time_s"].values / 3600.0
     e = df["voltage_v"].values
-    i = df["current_a"].values
 
-    color_e = "tab:blue"
-    color_i = "tab:orange"
+    # Grid and minor ticks
+    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.grid(True, which="major", linestyle="-", linewidth=0.6, alpha=0.25)
+    ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.15)
 
-    line_e, = ax.plot(t, e, lw=1.2, color=color_e, label="Voltage [V]")
-    ax.set_xlabel(r"Time [s]", fontsize=14)
-    ax.set_ylabel(r"Potential [V]", color=color_e, fontsize=14)
-    ax.tick_params(axis='y', labelcolor=color_e)
-
-    ax2 = ax.twinx()
-    line_i, = ax2.plot(t, i * 1000.0, lw=1.0, color=color_i, alpha=0.8, label="Current [mA]")
-    ax2.set_ylabel(r"Current [mA]", color=color_i, fontsize=14)
-    ax2.tick_params(axis='y', labelcolor=color_i)
-
-    ax.set_title(f"Voltage and Current vs Time")
-
-    lines = [line_e, line_i]
-    labels = [l.get_label() for l in lines]
-    ax.legend(lines, labels, loc="best", fontsize=8)
+    # Single trace: Voltage vs Time
+    ax.plot(t_hours, e, lw=1.2, color="tab:blue")
+    ax.set_xlabel(r"Time [h]", fontsize=14, color='black')
+    ax.set_ylabel(r"Potential [V]", fontsize=14, color='black')
+    ax.tick_params(axis='both', colors='black', labelcolor='black')
 
     fig.tight_layout()
-    fig.savefig(outpath)
+    fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
@@ -892,29 +927,9 @@ def process_file(csv_path: Path, ce_records: List[Dict]) -> None:
         ce_df.insert(0, "sample", sample_id)
         ce_records.extend(ce_df.to_dict(orient="records"))
 
-    # Plots
-    # 0) Voltage vs time (diagnostic)
-    vt_path = FIG_DIR / f"T3.1_V_vs_t_{csv_path.stem}{PLOT_EXT}"
+    # Only generate Voltage vs Time plot
+    vt_path = FIG_DIR / f"T3.1_V_vs_t{PLOT_EXT}"
     plot_voltage_over_time(sample_id, df, vt_path)
-
-    # 1) CV overlay (first three cycles if detectable)
-    cv_cycles = try_extract_cv_cycles(df, max_cycles=3)
-    cv_path = FIG_DIR / f"T3.1_CV_overlay_{csv_path.stem}{PLOT_EXT}"
-    plot_cv_overlay(sample_id, cv_cycles, cv_path)
-
-    # 2) Potential vs Capacity (overlay cycles and regimes)
-    pvc_path = FIG_DIR / f"T3.1_Potential_vs_Capacity_{csv_path.stem}{PLOT_EXT}"
-    plot_potential_vs_capacity(sample_id, df, mass_g, pvc_path)
-
-    # 3) dQ/dE (cathodic only)
-    dqdE_path = FIG_DIR / f"T3.1_dQdE_{csv_path.stem}{PLOT_EXT}"
-    plot_dqdE_cathodic(sample_id, df, mass_g, dqdE_path)
-
-    # 4) dQ/dE (cathodic only) for specific C-rates
-    c_rates = [0.1, 1.0, 2.0]
-    for c_rate in c_rates:
-        dqdE_crate_path = FIG_DIR / f"T3.1_dQdE_{c_rate}C_{csv_path.stem}{PLOT_EXT}"
-        plot_dqdE_cathodic_by_crate(sample_id, df, mass_g, c_rate, dqdE_crate_path)
 
 
 def main(argv: Optional[List[str]] = None) -> int:

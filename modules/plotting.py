@@ -26,6 +26,7 @@ def setup_plot_style() -> None:
             "legend.edgecolor": "#00000055",
             "legend.title_fontsize": 9,
             "savefig.dpi": 300,
+            "savefig.format": "png",
         }
     )
 
@@ -49,12 +50,15 @@ def beautify_axes(ax: plt.Axes) -> None:
 def safe_save(fig: plt.Figure, filename: str) -> Path:
     """Save a figure into the figures directory and return the artifact path."""
     ensure_dirs()
+    # Ensure filename has .png extension
+    if not filename.endswith('.png'):
+        filename = filename.rsplit('.', 1)[0] + '.png'
     out_path = FIG_DIR / filename
     try:
         fig.tight_layout()
     except Exception:
         pass
-    fig.savefig(out_path, dpi=300, bbox_inches="tight", facecolor="white")
+    fig.savefig(out_path, dpi=300, bbox_inches="tight", facecolor="white", format='png')
     plt.close(fig)
     print(f"Saved: {out_path.relative_to(ROOT)}")
     return out_path
