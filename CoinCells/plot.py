@@ -773,17 +773,26 @@ def plot_dqdE_cathodic(sample_id: str, df: pd.DataFrame, mass_g: float, outpath:
 
     ax.set_xlabel("E [V]", fontsize=14)
     ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
-    #if color_idx > 0:
-    #ax.legend(fontsize=8)
+    # No legend for combined plot
     fig.tight_layout()
     fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
-def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float, target_c_rate: float, outpath: Path, smoothing_config: SmoothingConfig = None) -> None:
+def plot_dqdE_cathodic_by_crate(
+    sample_id: str,
+    df: pd.DataFrame,
+    mass_g: float,
+    target_c_rate: float,
+    outpath: Path,
+    smoothing_config: SmoothingConfig = None,
+    target_currents_mA: Optional[List[float]] = None,
+    current_tolerance: float = 0.15,
+) -> None:
     """
-    Compute and plot dQ/dE vs E for cathodic (discharge) segments filtered by C-rate.
-    
+    Compute and plot dQ/dE vs E for cathodic (discharge) segments filtered by
+    either C-rate or explicit current levels.
+
     Args:
         sample_id: Sample identifier for plot title
         df: DataFrame with processed data
@@ -791,6 +800,9 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
         target_c_rate: Target C-rate to filter by (e.g., 0.1, 1.0, 2.0)
         outpath: Output path for the plot
         smoothing_config: SmoothingConfig object for dQdE smoothing
+        target_currents_mA: If provided, match segments by mean |I| near any of these
+            absolute current levels (in mA). Overrides C-rate filtering.
+        current_tolerance: Fractional tolerance for matching current levels (default 0.15 → ±15%).
     """
     fig, ax = plt.subplots(figsize=(8, 4))  # Wider to accommodate external legend
     colors = plt.cm.tab10.colors
@@ -804,8 +816,8 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
     # Specific capacity in mAh/g for discharge segments
     df["cap_mAh_g_seg"] = df["cap_mAh_seg"] / mass_g
 
-    # Calculate C-rates for each segment to filter by
-    segments_with_crate = []
+    # Calculate selection for each segment based on either C-rate or target currents
+    segments_selected = []
     for cyc, gcyc in df.groupby("cycle_est", sort=True):
         if cyc == 0:
             continue
@@ -813,18 +825,34 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
             if not bool(gseg["is_discharge"].iloc[0]):
                 continue
             
-            # Calculate C-rate for this segment
-            mean_current = gseg["current_a"].abs().mean()
-            c_rate = estimate_c_rate(mean_current, mass_g, THEORETICAL_CAPACITY_MAH_G)
-            
-            # Check if this segment matches the target C-rate
-            if abs(c_rate - target_c_rate) <= target_c_rate * c_rate_tolerance:
-                segments_with_crate.append((cyc, sid, gseg, c_rate))
+            # Mean current and C-rate for this segment
+            mean_current_A = gseg["current_a"].abs().mean()
+            mean_current_mA = mean_current_A * 1000.0
+            c_rate = estimate_c_rate(mean_current_A, mass_g, THEORETICAL_CAPACITY_MAH_G)
 
-    if not segments_with_crate:
-        # No segments found for this C-rate
-        ax.text(0.5, 0.5, f"No discharge segments found\nfor {target_c_rate}C (±{c_rate_tolerance*100:.0f}%)", 
-                ha="center", va="center", transform=ax.transAxes, fontsize=12)
+            # Check selection criterion
+            if target_currents_mA and len(target_currents_mA) > 0:
+                for I_target in target_currents_mA:
+                    if I_target is None or not np.isfinite(I_target):
+                        continue
+                    I_target_abs = abs(float(I_target))
+                    if I_target_abs == 0:
+                        continue
+                    if abs(mean_current_mA - I_target_abs) <= I_target_abs * current_tolerance:
+                        segments_selected.append((cyc, sid, gseg, c_rate))
+                        break
+            else:
+                if abs(c_rate - target_c_rate) <= max(target_c_rate * c_rate_tolerance, 1e-9):
+                    segments_selected.append((cyc, sid, gseg, c_rate))
+
+    if not segments_selected:
+        # No segments found for the requested selection
+        if target_currents_mA and len(target_currents_mA) > 0:
+            pretty_I = ", ".join(f"{i:.3g} mA" for i in target_currents_mA if np.isfinite(i))
+            msg = f"No discharge segments found for I≈[{pretty_I}] (±{current_tolerance*100:.0f}%)"
+        else:
+            msg = f"No discharge segments found for {target_c_rate}C (±{c_rate_tolerance*100:.0f}%)"
+        ax.text(0.5, 0.5, msg, ha="center", va="center", transform=ax.transAxes, fontsize=12)
         ax.set_xlabel("E [V]", fontsize=14)
         ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
         fig.tight_layout()
@@ -833,7 +861,7 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
         return
 
     # Plot segments that match the target C-rate
-    for cyc, sid, gseg, c_rate in segments_with_crate:
+    for cyc, sid, gseg, c_rate in segments_selected:
         E = gseg["voltage_v"].values
         Q = gseg["cap_mAh_g_seg"].abs().values
         if len(E) < 5:
@@ -872,7 +900,7 @@ def plot_dqdE_cathodic_by_crate(sample_id: str, df: pd.DataFrame, mass_g: float,
     ax.set_xlabel("E [V]", fontsize=14)
     ax.set_ylabel("dQ/dE [mAh/(g·V)]", fontsize=14)
     if color_idx > 0:
-        ax.legend(fontsize=8, loc="center left", bbox_to_anchor=(1.05, 0.5))
+        ax.legend(fontsize=8, loc="lower left")
     fig.tight_layout()
     fig.savefig(outpath, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -904,6 +932,41 @@ def plot_voltage_over_time(sample_id: str, df: pd.DataFrame, outpath: Path) -> N
 # -----------------------------
 # Runner
 # -----------------------------
+def parse_dqde_cli(argv: Optional[List[str]]) -> Tuple[Optional[List[float]], float]:
+    """
+    Parse optional CLI args for dQ/dE current-based selection.
+    --dqde-currents=2.38,0.24,4.75   (mA)
+    --dqde-tol=0.15                  (fraction, ±15%)
+    """
+    currents: Optional[List[float]] = None
+    tol: float = 0.15
+    if not argv:
+        return currents, tol
+    for arg in argv:
+        if arg.startswith("--dqde-currents="):
+            try:
+                val = arg.split("=", 1)[1]
+                toks = re.split(r"[;,\s]+", val.strip())
+                parsed: List[float] = []
+                for t in toks:
+                    if not t:
+                        continue
+                    try:
+                        parsed.append(float(t))
+                    except Exception:
+                        pass
+                if parsed:
+                    currents = parsed
+            except Exception:
+                pass
+        elif arg.startswith("--dqde-tol="):
+            try:
+                tol = float(arg.split("=", 1)[1])
+            except Exception:
+                pass
+    return currents, tol
+
+
 def process_file(csv_path: Path, ce_records: List[Dict]) -> None:
     stem = csv_path.stem
     sample_id = extract_sample_id(stem)
@@ -927,9 +990,49 @@ def process_file(csv_path: Path, ce_records: List[Dict]) -> None:
         ce_df.insert(0, "sample", sample_id)
         ce_records.extend(ce_df.to_dict(orient="records"))
 
-    # Only generate Voltage vs Time plot
+    # Voltage vs Time plot
     vt_path = FIG_DIR / f"T3.1_V_vs_t{PLOT_EXT}"
     plot_voltage_over_time(sample_id, df, vt_path)
+
+    # Potential vs Capacity overlay
+    pvc_path = FIG_DIR / f"T3.1_Potential_vs_Capacity_{PLOT_EXT}"
+    try:
+        plot_potential_vs_capacity(sample_id, df, mass_g, pvc_path)
+    except Exception as e:
+        print(f"[WARN] Potential vs Capacity plot failed: {e}")
+
+    # dQ/dE overlay for all discharge segments
+    try:
+        dqdE_path = FIG_DIR / f"T3.1_dQdE_{PLOT_EXT}"
+        plot_dqdE_cathodic(sample_id, df, mass_g, dqdE_path)
+    except Exception as e:
+        print(f"[WARN] dQ/dE overlay plot failed: {e}")
+
+    # dQ/dE per target rate, optionally matched by explicit current levels via CLI
+    try:
+        currents_mA, tol = parse_dqde_cli(sys.argv)
+    except Exception:
+        currents_mA, tol = None, 0.15
+
+    target_crates = [0.1, 1.0, 2.0]
+    for idx, target_c_rate in enumerate(target_crates):
+        outpath = FIG_DIR / f"T3.1_dQdE_{target_c_rate:.1f}C_{PLOT_EXT}"
+        extra_kwargs = {}
+        if currents_mA and idx < len(currents_mA) and np.isfinite(currents_mA[idx]):
+            extra_kwargs["target_currents_mA"] = [float(currents_mA[idx])]
+            extra_kwargs["current_tolerance"] = float(tol)
+        try:
+            plot_dqdE_cathodic_by_crate(
+                sample_id,
+                df,
+                mass_g,
+                target_c_rate,
+                outpath,
+                smoothing_config=None,
+                **extra_kwargs,
+            )
+        except Exception as e:
+            print(f"[WARN] dQ/dE {target_c_rate:.1f}C plot failed: {e}")
 
 
 def main(argv: Optional[List[str]] = None) -> int:
