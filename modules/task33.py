@@ -225,19 +225,8 @@ def analyze_task33_lsv_and_eis() -> TaskReport:
                     beautify_axes(axkl)
                     report.record_figure(safe_save(figkl, "T3.3_KL_example.png"))
 
-                zero_Es = []
-                for rpm, j in j_by_rpm.items():
-                    sign = np.sign(j)
-                    zcross = np.where(np.diff(sign))[0]
-                    if len(zcross):
-                        idx = zcross[0]
-                        E0 = float(np.interp(0.0, [j[idx], j[idx + 1]], [E_grid[idx], E_grid[idx + 1]]))
-                        zero_Es.append(E0)
-                if zero_Es:
-                    E_eq = float(np.median(zero_Es))
-                else:
-                    idx = int(np.argmin(np.abs(df_jk["j_k_A_cm2"])) )
-                    E_eq = float(df_jk["E_V"].iloc[idx])
+                # Use formal potential as equilibrium potential
+                E_eq = 0.292  # Formal potential in V
 
                 jk_data = df_jk.copy()
                 jk_data["eta_V"] = jk_data["E_V"] - E_eq
